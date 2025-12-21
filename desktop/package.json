@@ -1,111 +1,120 @@
 {
-	"name": "context-desktop",
-	"productName": "Context",
-	"version": "1.0.0",
-	"description": "Context desktop app",
-	"main": "dist/backend/main.js",
-	"scripts": {
-		"dev": "concurrently \"pnpm run dev:renderer-settings\" \"pnpm run dev:watch-main\"",
-		"dev:watch-main": "NODE_ENV=development nodemon --watch main --ext ts --exec \"pnpm run build:backend && electron dist/backend/main.js\"",
-		"dev:renderer-settings": "vite --config vite.settings.config.js",
-		"build": "pnpm run build:backend && pnpm run build:renderers",
-		"build:backend": "tsc -p backend/tsconfig.json",
-		"build:renderers": "vite build --config vite.settings.config.js",
-		"watch:main": "tsc -p backend/tsconfig.json --watch --preserveWatchOutput",
-		"pack": "pnpm run build && electron-builder --publish=never",
-		"pack-local": "SKIP_NOTARIZE=true pnpm run build && SKIP_NOTARIZE=true electron-builder --publish=never && cp -r ./dist-electron/mac-arm64/Context.app /Applications/",
-		"start": "electron .",
-		"release": "standard-version",
-		"postinstall": "electron-builder install-app-deps && electron-rebuild -f -w better-sqlite3,sharp",
-		"ts-check-windows": "tsc -p windows/tsconfig.json --noEmit",
-		"ts-check-backend": "tsc -p backend/tsconfig.json --noEmit"
-	},
-	"keywords": [],
-	"author": {
-		"name": "Felipe Aragão",
-		"email": "faragaop@gmail.com"
-	},
-	"license": "MIT",
-	"devDependencies": {
-		"@types/node": "^22.0.0",
-		"@typescript-eslint/eslint-plugin": "^5.62.0",
-		"@typescript-eslint/parser": "^5.62.0",
-		"concurrently": "^9.1.0",
-		"electron": "39.2.7",
-		"electron-builder": "^26.0.12",
-		"eslint": "^8.57.1",
-		"eslint-plugin-import": "^2.32.0",
-		"prettier": "^3.7.4",
-		"typescript": "^5.0.0",
-		"vite": "^5.4.21"
-	},
-	"dependencies": {
-		"@tailwindcss/postcss": "^4.1.18",
-		"@vitejs/plugin-react": "^4.2.1",
-		"class-variance-authority": "^0.7.1",
-		"electron-store": "^8.1.0",
-		"tailwind-merge": "^3.4.0"
-	},
-	"build": {
-		"appId": "com.github.faragaop.context",
-		"productName": "Context",
-		"icon": "assets/icon",
-		"directories": {
-			"output": "dist-electron"
-		},
-		"files": [
-			"dist/**/*",
-			"node_modules/**/*",
-			"entitlements.mac.plist",
-			"scripts/**/*"
-		],
-		"asarUnpack": [
-			"**/node_modules/sharp/**/*",
-			"**/node_modules/@img/**/*"
-		],
-		"extraResources": [
-			{
-				"from": "assets",
-				"to": "assets",
-				"filter": [
-					"**/*"
-				]
-			}
-		],
-		"mac": {
-			"category": "public.app-category.productivity",
-			"icon": "assets/icon.icns",
-			"hardenedRuntime": true,
-			"gatekeeperAssess": false,
-			"entitlements": "entitlements.mac.plist",
-			"entitlementsInherit": "entitlements.mac.plist",
-			"notarize": false,
-			"target": [
-				{
-					"target": "dmg",
-					"arch": [
-						"arm64"
-					]
-				}
-			]
-		},
-		"dmg": {
-			"title": "Context",
-			"artifactName": "Context-${version}-${arch}.${ext}",
-			"sign": false
-		},
-		"afterSign": "scripts/notarize.js",
-		"win": {
-			"icon": "assets/icon.ico",
-			"target": "nsis"
-		},
-		"linux": {
-			"icon": "assets/icon.png",
-			"target": "AppImage"
-		},
-		"nsis": {
-			"oneClick": false,
-			"allowToChangeInstallationDirectory": true
-		}
-	}
+  "name": "context-desktop",
+  "productName": "Context",
+  "version": "1.0.0",
+  "description": "Context desktop app",
+  "main": "dist/backend/main.js",
+  "license": "MIT",
+  "scripts": {
+    "dev": "concurrently \"pnpm run dev:renderer-settings\" \"pnpm run dev:watch-main\"",
+    "dev:watch-main": "NODE_ENV=development nodemon --watch main --ext ts --exec \"pnpm run build:backend && electron dist/backend/main.js\"",
+    "dev:renderer-settings": "vite --config vite.settings.config.js",
+    "build": "pnpm run build:backend && pnpm run build:renderers",
+    "build:backend": "tsc -p backend/tsconfig.json",
+    "build:renderers": "vite build --config vite.settings.config.js",
+    "watch:main": "tsc -p backend/tsconfig.json --watch --preserveWatchOutput",
+    "pack": "pnpm run build && electron-builder --publish=never",
+    "pack-local": "SKIP_NOTARIZE=true pnpm run build && SKIP_NOTARIZE=true electron-builder --publish=never && cp -r ./dist-electron/mac-arm64/Context.app /Applications/",
+    "start": "electron .",
+    "release": "standard-version",
+    "postinstall": "electron-builder install-app-deps && electron-rebuild -f -w better-sqlite3,sharp",
+    "ts-check-windows": "tsc -p windows/tsconfig.json --noEmit",
+    "ts-check-backend": "tsc -p backend/tsconfig.json --noEmit"
+  },
+  "prettier": {
+    "singleQuote": true,
+    "semi": false
+  },
+  "keywords": [],
+  "author": {
+    "name": "Felipe Aragão",
+    "email": "faragaop@gmail.com"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "@typescript-eslint/eslint-plugin": "^5.62.0",
+    "@typescript-eslint/parser": "^5.62.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "concurrently": "^9.1.0",
+    "electron": "39.2.7",
+    "electron-builder": "^26.0.12",
+    "eslint": "^8.57.1",
+    "eslint-plugin-import": "^2.32.0",
+    "prettier": "^3.7.4",
+    "typescript": "^5.0.0",
+    "vite": "^5.4.21"
+  },
+  "dependencies": {
+    "@tailwindcss/forms": "^0.5.11",
+    "@tailwindcss/postcss": "^4.1.18",
+    "class-variance-authority": "^0.7.1",
+    "electron-store": "^8.1.0",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "tailwind-merge": "^3.4.0"
+  },
+  "build": {
+    "appId": "com.github.faragaop.context",
+    "productName": "Context",
+    "icon": "assets/icon",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "dist/**/*",
+      "node_modules/**/*",
+      "entitlements.mac.plist",
+      "scripts/**/*"
+    ],
+    "asarUnpack": [
+      "**/node_modules/sharp/**/*",
+      "**/node_modules/@img/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "assets",
+        "to": "assets",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "icon": "assets/icon.icns",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "entitlements.mac.plist",
+      "entitlementsInherit": "entitlements.mac.plist",
+      "notarize": false,
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64"
+          ]
+        }
+      ]
+    },
+    "dmg": {
+      "title": "Context",
+      "artifactName": "Context-${version}-${arch}.${ext}",
+      "sign": false
+    },
+    "afterSign": "scripts/notarize.js",
+    "win": {
+      "icon": "assets/icon.ico",
+      "target": "nsis"
+    },
+    "linux": {
+      "icon": "assets/icon.png",
+      "target": "AppImage"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
 }
