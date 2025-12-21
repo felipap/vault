@@ -1,8 +1,4 @@
-interface State {
-	apiKey?: string;
-}
-
-interface ApiRequestLog {
+export interface ApiRequestLog {
 	id: string;
 	timestamp: number;
 	method: string;
@@ -11,35 +7,21 @@ interface ApiRequestLog {
 	statusCode?: number;
 	duration: number;
 	error?: string;
-	response?: string;
+}
+
+export interface ScreenCaptureConfig {
+	enabled: boolean;
+	intervalMinutes: number;
 }
 
 interface ElectronAPI {
-	getState: () => Promise<State>;
-	setPartialState: (state: Partial<State>) => Promise<void>;
-	setApiKey: (apiKey: string) => Promise<void>;
-	setCaptureInterval: (minutes: number) => Promise<void>;
-	toggleMonitoring: () => Promise<boolean>;
-	captureNow: () => Promise<void>;
-	testApiConnection: () => Promise<boolean>;
+	platform: string;
 	getRequestLogs: () => Promise<ApiRequestLog[]>;
-	getOpenAtLogin: () => Promise<boolean>;
-	setOpenAtLogin: (openAtLogin: boolean) => Promise<void>;
-	onStateChange: (callback: (state: State) => void) => () => void;
-	onIpcEvent: (
-		channel: string,
-		callback: (...args: any[]) => void
-	) => () => void;
-	store: {
-		get: <T>(key: string) => Promise<T>;
-		set: (key: string, value: any) => Promise<void>;
-	};
-	// Permissions
-	checkFullDiskAccess: () => Promise<boolean>;
-	requestFullDiskAccess: () => Promise<boolean>;
-	openFullDiskAccessSettings: () => Promise<void>;
-	checkAccessibilityAccess: () => Promise<boolean>;
-	openAccessibilitySettings: () => Promise<void>;
+	clearRequestLogs: () => Promise<void>;
+	getScreenCaptureConfig: () => Promise<ScreenCaptureConfig>;
+	setScreenCaptureConfig: (config: Partial<ScreenCaptureConfig>) => Promise<void>;
+	getServerUrl: () => Promise<string>;
+	setServerUrl: (url: string) => Promise<void>;
 }
 
 declare global {
@@ -47,5 +29,3 @@ declare global {
 		electron: ElectronAPI;
 	}
 }
-
-export {};
