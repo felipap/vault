@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
   }
 
   const contentType = request.headers.get("content-type") || "";
-  
+
   let imageBuffer: Buffer;
 
   if (contentType.includes("multipart/form-data")) {
