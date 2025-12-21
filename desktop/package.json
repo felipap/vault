@@ -7,7 +7,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "concurrently \"pnpm run dev:renderer-settings\" \"pnpm run dev:watch-main\"",
-    "dev:watch-main": "NODE_ENV=development nodemon --watch main --ext ts --exec \"pnpm run build:backend && electron dist/backend/main.js\"",
+    "dev:watch-main": "NODE_ENV=development nodemon --watch backend --ext ts --exec \"pnpm run build:backend && electron dist/backend/main.js\"",
     "dev:renderer-settings": "vite --config vite.settings.config.js",
     "build": "pnpm run build:backend && pnpm run build:renderers",
     "build:backend": "tsc -p backend/tsconfig.json",

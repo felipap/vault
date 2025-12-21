@@ -16,7 +16,7 @@ export function createMainWindow(): BrowserWindow {
 
   if (isDev) {
     mainWindow.loadURL('http://localhost:4001')
-    mainWindow.webContents.openDevTools()
+    // mainWindow.webContents.openDevTools()
   } else {
     mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'))
   }
