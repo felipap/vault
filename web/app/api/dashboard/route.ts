@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { screenshots } from "@/lib/db/schema"
-import { eq, sql, desc } from "drizzle-orm"
+import { sql, desc } from "drizzle-orm"
 import { headers } from "next/headers"
 
 export async function GET() {
@@ -20,10 +20,8 @@ export async function GET() {
       totalBytes: sql<number>`coalesce(sum(${screenshots.sizeBytes}), 0)::int`,
     })
     .from(screenshots)
-    .where(eq(screenshots.userId, session.user.id))
 
   const recentScreenshots = await db.query.screenshots.findMany({
-    where: eq(screenshots.userId, session.user.id),
     orderBy: desc(screenshots.capturedAt),
     limit: 10,
     columns: {
