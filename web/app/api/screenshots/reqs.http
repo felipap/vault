@@ -1,0 +1,22 @@
+@deviceSecret = 123456789
+
+###
+
+POST http://localhost:3000/api/screenshots
+Authorization: Bearer {{deviceSecret}}
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary
+
+------WebKitFormBoundary
+Content-Disposition: form-data; name="screenshot"; filename="test-image.png"
+Content-Type: image/png
+
+< ./test-image.png
+------WebKitFormBoundary
+Content-Disposition: form-data; name="windowTitle"
+
+Chrome - GitHub
+------WebKitFormBoundary
+Content-Disposition: form-data; name="appName"
+
+Google Chrome
+------WebKitFormBoundary--

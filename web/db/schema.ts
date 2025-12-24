@@ -25,7 +25,8 @@ export type SelectDevice = typeof Devices.$inferSelect
 export const Screenshots = pgTable("screenshots", {
   id: uuid("id").defaultRandom().primaryKey(),
   deviceId: uuid("device_id")
-    .notNull()
+    // We'll fix this later.
+    // .notNull()
     .references(() => Devices.id, { onDelete: "cascade" }),
   data: text("data").notNull(),
   width: integer("width").notNull(),
