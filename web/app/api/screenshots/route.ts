@@ -34,8 +34,6 @@ export async function POST(request: NextRequest) {
   }
 
   const formData = await request.formData()
-  console.log("windowTitle", formData.get("windowTitle"))
-
   const file = formData.get("screenshot") as File | null
 
   if (!file) {
@@ -54,6 +52,13 @@ export async function POST(request: NextRequest) {
   }
 
   const imageBuffer = Buffer.from(await file.arrayBuffer())
+
+  if (imageBuffer.length === 0) {
+    return NextResponse.json(
+      { error: "Screenshot file is empty" },
+      { status: 400 }
+    )
+  }
 
   // Optional metadata fields - add to schema then uncomment:
   // const windowTitle = formData.get("windowTitle") as string | null
