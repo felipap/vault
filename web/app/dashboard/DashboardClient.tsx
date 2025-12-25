@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { logout, getDashboardStats, type DashboardStats } from "../actions"
+import { getDashboardStats, logout, type DashboardStats } from "./actions"
 import { RecentScreenshots } from "./RecentScreenshots"
 
 function formatBytes(bytes: number): string {
