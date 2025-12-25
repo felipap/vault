@@ -8,7 +8,7 @@ import {
 import { redirect } from "next/navigation"
 import { db } from "@/db"
 import { Devices, Screenshots } from "@/db/schema"
-import { sql, desc } from "drizzle-orm"
+import { sql, desc, eq } from "drizzle-orm"
 
 export type DashboardStats = {
   totalScreenshots: number
@@ -20,8 +20,8 @@ export type Device = {
   deviceId: string
   name: string | null
   approved: boolean
-  lastSeenAt: string | null
-  createdAt: string
+  lastSeenAt: Date | null
+  createdAt: Date
 }
 
 export async function getDashboardStats(): Promise<DashboardStats> {

@@ -10,7 +10,7 @@ export type Screenshot = {
   width: number
   height: number
   sizeBytes: number
-  capturedAt: string
+  capturedAt: Date
 }
 
 export async function getRecentScreenshots(): Promise<Screenshot[]> {
