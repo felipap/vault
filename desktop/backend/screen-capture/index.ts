@@ -1,194 +1,193 @@
-import { desktopCapturer, screen } from "electron";
-import { store, addRequestLog, getDeviceId, getDeviceSecret } from "../store";
-import { startAnimating, stopAnimating } from "../tray/animate";
+import { desktopCapturer, screen } from 'electron'
+import { store, addRequestLog, getDeviceId, getDeviceSecret } from '../store'
+import { startAnimating, stopAnimating } from '../tray/animate'
 
-let captureInterval: NodeJS.Timeout | null = null;
-let nextCaptureTime: Date | null = null;
+let captureInterval: NodeJS.Timeout | null = null
+let nextCaptureTime: Date | null = null
 
 export function getNextCaptureTime(): Date | null {
-  return nextCaptureTime;
+  return nextCaptureTime
 }
 
 export function getTimeUntilNextCapture(): number {
   if (!nextCaptureTime) {
-    return 0;
+    return 0
   }
-  return Math.max(0, nextCaptureTime.getTime() - Date.now());
+  return Math.max(0, nextCaptureTime.getTime() - Date.now())
 }
 
 export function formatTimeUntilNextCapture(): string {
-  const ms = getTimeUntilNextCapture();
-  const totalSeconds = Math.floor(ms / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes}m ${seconds}s`;
+  const ms = getTimeUntilNextCapture()
+  const totalSeconds = Math.floor(ms / 1000)
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  return `${minutes}m ${seconds}s`
 }
 
 async function captureScreen(): Promise<Buffer | null> {
-  const primaryDisplay = screen.getPrimaryDisplay();
-  const { width, height } = primaryDisplay.size;
+  const primaryDisplay = screen.getPrimaryDisplay()
+  const { width, height } = primaryDisplay.size
 
   const sources = await desktopCapturer.getSources({
-    types: ["screen"],
+    types: ['screen'],
     thumbnailSize: { width, height },
-  });
+  })
 
   if (sources.length === 0) {
-    console.error("No screen sources found");
-    return null;
+    console.error('No screen sources found')
+    return null
   }
 
-  const primarySource = sources[0];
-  const thumbnail = primarySource.thumbnail;
+  const primarySource = sources[0]
+  const thumbnail = primarySource.thumbnail
 
   if (thumbnail.isEmpty()) {
-    console.error("Screen capture returned empty thumbnail");
-    return null;
+    console.error('Screen capture returned empty thumbnail')
+    return null
   }
 
-  const pngBuffer = thumbnail.toPNG();
+  const pngBuffer = thumbnail.toPNG()
   if (pngBuffer.length === 0) {
-    console.error("Screen capture returned empty PNG buffer");
-    return null;
+    console.error('Screen capture returned empty PNG buffer')
+    return null
   }
 
-  return pngBuffer;
+  return pngBuffer
 }
 
 async function uploadScreenshot(imageBuffer: Buffer): Promise<void> {
-  const serverUrl = store.get("serverUrl");
-  const deviceId = getDeviceId();
-  const deviceSecret = getDeviceSecret();
-  const path = "/api/screenshots";
-  const uploadUrl = `${serverUrl}${path}`;
+  const serverUrl = store.get('serverUrl')
+  const deviceId = getDeviceId()
+  const deviceSecret = getDeviceSecret()
+  const path = '/api/screenshots'
+  const uploadUrl = `${serverUrl}${path}`
 
-  const formData = new FormData();
-  const uint8Array = new Uint8Array(imageBuffer);
-  const blob = new Blob([uint8Array], { type: "image/png" });
-  formData.append("screenshot", blob, `screenshot-${Date.now()}.png`);
+  const formData = new FormData()
+  const uint8Array = new Uint8Array(imageBuffer)
+  const blob = new Blob([uint8Array], { type: 'image/png' })
+  formData.append('screenshot', blob, `screenshot-${Date.now()}.png`)
 
-  const startTime = Date.now();
+  const startTime = Date.now()
 
-  let response: Response;
+  let response: Response
   try {
     response = await fetch(uploadUrl, {
-      method: "POST",
+      method: 'POST',
       body: formData,
       headers: {
-        "x-device-id": deviceId,
+        'x-device-id': deviceId,
         Authorization: `Bearer ${deviceSecret}`,
       },
-    });
+    })
   } catch (error) {
     addRequestLog({
       timestamp: startTime,
-      method: "POST",
+      method: 'POST',
       path,
-      status: "error",
+      status: 'error',
       duration: Date.now() - startTime,
-      error: error instanceof Error ? error.message : "Network error",
-    });
-    throw error;
+      error: error instanceof Error ? error.message : 'Network error',
+    })
+    throw error
   }
 
-  const duration = Date.now() - startTime;
+  const duration = Date.now() - startTime
 
   if (!response.ok) {
     addRequestLog({
       timestamp: startTime,
-      method: "POST",
+      method: 'POST',
       path,
-      status: "error",
+      status: 'error',
       statusCode: response.status,
       duration,
       error: `${response.status} ${response.statusText}`,
-    });
-    throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
+    })
+    throw new Error(`Upload failed: ${response.status} ${response.statusText}`)
   }
 
   addRequestLog({
     timestamp: startTime,
-    method: "POST",
+    method: 'POST',
     path,
-    status: "success",
+    status: 'success',
     statusCode: response.status,
     duration,
-  });
+  })
 
-  console.log("Screenshot uploaded successfully");
+  console.log('Screenshot uploaded successfully')
 }
 
 async function captureAndUpload(): Promise<void> {
-  console.log("Capturing screen...");
+  console.log('Capturing screen...')
 
-  const imageBuffer = await captureScreen();
+  const imageBuffer = await captureScreen()
   if (!imageBuffer) {
-    console.error("Failed to capture screen");
-    return;
+    console.error('Failed to capture screen')
+    return
   }
 
-  startAnimating("old");
+  startAnimating('old')
   try {
-    await uploadScreenshot(imageBuffer);
+    await uploadScreenshot(imageBuffer)
   } catch (error) {
-    console.error("Failed to upload screenshot:", error);
+    console.error('Failed to upload screenshot:', error)
   } finally {
-    stopAnimating();
+    stopAnimating()
   }
 }
 
 function scheduleNextCapture(): void {
-  const screenCaptureConfig = store.get("screenCapture");
-  const intervalMs = screenCaptureConfig.intervalMinutes * 60 * 1000;
+  const screenCaptureConfig = store.get('screenCapture')
+  const intervalMs = screenCaptureConfig.intervalMinutes * 60 * 1000
 
-  nextCaptureTime = new Date(Date.now() + intervalMs);
+  nextCaptureTime = new Date(Date.now() + intervalMs)
 
   captureInterval = setTimeout(async () => {
-    await captureAndUpload();
-    scheduleNextCapture();
-  }, intervalMs);
+    await captureAndUpload()
+    scheduleNextCapture()
+  }, intervalMs)
 }
 
 export function startScreenCapture(): void {
   if (captureInterval) {
-    console.log("Screen capture already running");
-    return;
+    console.log('Screen capture already running')
+    return
   }
 
-  const screenCaptureConfig = store.get("screenCapture");
+  const screenCaptureConfig = store.get('screenCapture')
   if (!screenCaptureConfig.enabled) {
-    console.log("Screen capture is disabled");
-    return;
+    console.log('Screen capture is disabled')
+    return
   }
 
-  console.log("Starting screen capture...");
+  console.log('Starting screen capture...')
 
   // Take an initial screenshot immediately
-  captureAndUpload();
+  captureAndUpload()
 
   // Schedule subsequent captures
-  scheduleNextCapture();
+  scheduleNextCapture()
 }
 
 export function stopScreenCapture(): void {
   if (captureInterval) {
-    clearTimeout(captureInterval);
-    captureInterval = null;
-    nextCaptureTime = null;
-    console.log("Screen capture stopped");
+    clearTimeout(captureInterval)
+    captureInterval = null
+    nextCaptureTime = null
+    console.log('Screen capture stopped')
   }
 }
 
 export function restartScreenCapture(): void {
-  stopScreenCapture();
-  startScreenCapture();
+  stopScreenCapture()
+  startScreenCapture()
 }
 
 export function isScreenCaptureRunning(): boolean {
-  return captureInterval !== null;
+  return captureInterval !== null
 }
 
 export async function captureNow(): Promise<void> {
-  await captureAndUpload();
+  await captureAndUpload()
 }
-

@@ -8,7 +8,7 @@ const DOWNLOADS_DIR = path.join(os.homedir(), 'Downloads')
 // Assets should be at: desktop/assets/
 const ASSETS_DIR = path.resolve(__dirname, '../../assets')
 
-const ANIMATION = 'default'
+const ANIMATION = 'old'
 
 function findFrameFiles(): string[] {
   const files = fs.readdirSync(DOWNLOADS_DIR)
