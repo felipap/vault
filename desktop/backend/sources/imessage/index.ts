@@ -23,6 +23,7 @@ export async function fetchMessages(
   const result = await sdk.getMessages({
     since,
     limit: 100,
+    excludeOwnMessages: false,
   })
 
   return result.messages.map((msg) => ({

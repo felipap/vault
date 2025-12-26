@@ -1,5 +1,5 @@
 import { execSync } from 'child_process'
-import { store, addRequestLog, getDeviceId, getDeviceSecret } from '../../store'
+import { apiRequest } from '../../lib/contexter-api'
 
 export type Contact = {
   id: string
@@ -87,61 +87,10 @@ export async function uploadContacts(contacts: Contact[]): Promise<void> {
     return
   }
 
-  const serverUrl = store.get('serverUrl')
-  const deviceId = getDeviceId()
-  const deviceSecret = getDeviceSecret()
-  const path = '/api/contacts'
-  const uploadUrl = `${serverUrl}${path}`
-
-  const startTime = Date.now()
-
-  let response: Response
-  try {
-    response = await fetch(uploadUrl, {
-      method: 'POST',
-      body: JSON.stringify({ contacts }),
-      headers: {
-        'Content-Type': 'application/json',
-        'x-device-id': deviceId,
-        Authorization: `Bearer ${deviceSecret}`,
-      },
-    })
-  } catch (error) {
-    addRequestLog({
-      timestamp: startTime,
-      method: 'POST',
-      path,
-      status: 'error',
-      duration: Date.now() - startTime,
-      error: error instanceof Error ? error.message : 'Network error',
-    })
-    throw error
-  }
-
-  const duration = Date.now() - startTime
-
-  if (!response.ok) {
-    addRequestLog({
-      timestamp: startTime,
-      method: 'POST',
-      path,
-      status: 'error',
-      statusCode: response.status,
-      duration,
-      error: `${response.status} ${response.statusText}`,
-    })
-    throw new Error(`Upload failed: ${response.status} ${response.statusText}`)
-  }
-
-  addRequestLog({
-    timestamp: startTime,
-    method: 'POST',
-    path,
-    status: 'success',
-    statusCode: response.status,
-    duration,
+  await apiRequest({
+    path: '/api/contacts',
+    body: { contacts },
   })
 
   console.log(`Uploaded ${contacts.length} contacts successfully`)
 }
-
