@@ -12,6 +12,7 @@ export type DashboardStats = {
   totalStorageBytes: number
   totalMessages: number
   totalChats: number
+  totalContacts: number
 }
 
 export async function getDashboardStats(): Promise<DashboardStats> {
@@ -39,11 +40,18 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     WHERE user_id = ${DEFAULT_USER_ID}
   `)
 
+  const [contactStats] = await db.execute<{ count: number }>(sql`
+    SELECT COUNT(DISTINCT contact)::int as count
+    FROM imessages
+    WHERE user_id = ${DEFAULT_USER_ID}
+  `)
+
   return {
     totalScreenshots: screenshotStats.count,
     totalStorageBytes: screenshotStats.totalBytes,
     totalMessages: messageStats.count,
     totalChats: chatStats.count,
+    totalContacts: contactStats.count,
   }
 }
 export async function logout(): Promise<void> {
