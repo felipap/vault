@@ -1,71 +1,30 @@
-// Data is stored at ~/Library/Application Support/Context/data.json (prod)
-// or ~/Library/Application Support/ContextDev/data.json (dev)
+// Data is stored at:
+// - ~/Library/Application Support/Context/data.json
+// - ~/Library/Application Support/ContextDev/data.json (dev)
 
 import { app } from 'electron'
 import Store from 'electron-store'
-import { randomUUID } from 'crypto'
+import { MAX_LOGS } from '../config'
 import { debug } from '../lib/logger'
+import { ApiRequestLog, DEFAULT_STATE, StoreSchema } from './schema'
 
-// Set the app name so that data is stored in ~/Library/Application Support/ContextDev
-// in dev mode. The original appName comes from package.json.
+// Changes where the backend data is stored depending on dev or prod.
 app.setName(`Context${app.isPackaged ? '' : 'Dev'}`)
 
 debug('Store path:', app.getPath('userData'))
 
-export type ApiRequestLog = {
-  id: string
-  timestamp: number
-  method: string
-  path: string
-  status: 'success' | 'error'
-  statusCode?: number
-  duration: number
-  error?: string
-}
-
-type StoreSchema = {
-  deviceId: string
-  deviceSecret: string
-  serverUrl: string
-  screenCapture: {
-    enabled: boolean
-    intervalMinutes: number
-  }
-  imessageExport: {
-    enabled: boolean
-    intervalMinutes: number
-    includeAttachments: boolean
-  }
-  contactsSync: {
-    enabled: boolean
-    intervalMinutes: number
-  }
-  requestLogs: ApiRequestLog[]
-}
-
-const MAX_LOGS = 100
-
 export const store = new Store<StoreSchema>({
-  defaults: {
-    deviceId: randomUUID(),
-    deviceSecret: '',
-    serverUrl: 'http://localhost:3000',
-    screenCapture: {
-      enabled: true,
-      intervalMinutes: 5,
-    },
-    imessageExport: {
-      enabled: false,
-      intervalMinutes: 5,
-      includeAttachments: true,
-    },
-    contactsSync: {
-      enabled: false,
-      intervalMinutes: 60,
-    },
-    requestLogs: [],
-  },
+  name: 'data',
+  defaults: DEFAULT_STATE,
 })
+
+//
+//
+//
+//
+//
+//
+//
 
 export function getDeviceSecret(): string {
   return store.get('deviceSecret')

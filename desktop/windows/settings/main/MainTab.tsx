@@ -51,7 +51,7 @@ export function MainTab() {
               onChange={(e) => setServerUrl(e.target.value)}
               onBlur={handleServerUrlBlur}
               className="w-full px-3 py-2 rounded-md border bg-[var(--background-color-three)] focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="http://localhost:3000"
+              placeholder="http://context.yourdomain.com"
             />
           </div>
 

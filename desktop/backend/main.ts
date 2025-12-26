@@ -1,6 +1,6 @@
 import { app } from 'electron'
 import {
-  createMainWindow,
+  createSettingsWindow,
   getMainWindow,
   showMainWindow,
 } from './windows/settings'
@@ -29,7 +29,7 @@ app.on('second-instance', () => {
   // Someone tried to run a second instance, focus our window instead
   const win = getMainWindow()
   if (!win) {
-    createMainWindow()
+    createSettingsWindow()
     return
   }
   if (win.isMinimized()) {
@@ -66,7 +66,7 @@ app.whenReady().then(async () => {
 
   // Only show settings window if configuration is needed
   if (needsConfiguration()) {
-    createMainWindow()
+    createSettingsWindow()
   }
 
   await startAllServices()

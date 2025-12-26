@@ -1,4 +1,5 @@
 import { app, nativeImage, NativeImage } from 'electron'
+import { existsSync } from 'fs'
 import path from 'path'
 
 export async function tryCatch<T>(
@@ -43,4 +44,32 @@ export function getIsOutsideApplicationsFolder(): boolean {
   }
   // On macOS, check if app is in the Applications folder
   return !app.isInApplicationsFolder()
+}
+
+export function getIconPath(env?: 'production' | 'development'): string | null {
+  const currentEnv =
+    env ||
+    (process.env.NODE_ENV as 'production' | 'development') ||
+    'development'
+
+  const possibleIconPaths = [
+    path.join(__dirname, '../../assets/icons/', `${currentEnv}.png`),
+    path.join(__dirname, '../../assets/icons/', `${currentEnv}.icns`),
+    path.join(process.resourcesPath, 'assets/icons/', `${currentEnv}.png`),
+    path.join(process.resourcesPath, 'assets/icons/', `${currentEnv}.icns`),
+    path.join(process.cwd(), 'assets/icons/', `${currentEnv}.png`),
+    path.join(process.cwd(), 'assets/icons/', `${currentEnv}.icns`),
+  ]
+
+  for (const path of possibleIconPaths) {
+    if (existsSync(path)) {
+      return path
+    }
+  }
+
+  return null
+}
+
+export function findIconPath(): string | null {
+  return getIconPath()
 }

@@ -27,7 +27,7 @@ function getAuthHeaders(): Record<string, string> {
   }
 }
 
-function getBaseUrl(): string {
+function getBaseUrl(): string | null {
   return store.get('serverUrl')
 }
 
@@ -38,6 +38,11 @@ export async function apiRequest<T = unknown>({
 }: JsonRequestOptions): Promise<
   { data: T } | { error: string; errorStatus: number }
 > {
+  const baseUrl = getBaseUrl()
+  if (!baseUrl) {
+    throw new Error('Server URL is not set')
+  }
+
   const url = `${getBaseUrl()}${path}`
   const startTime = Date.now()
 
@@ -103,7 +108,12 @@ export async function apiFormDataRequest<T = unknown>({
   path,
   formData,
 }: FormDataRequestOptions): Promise<T> {
-  const url = `${getBaseUrl()}${path}`
+  const baseUrl = getBaseUrl()
+  if (!baseUrl) {
+    throw new Error('Server URL is not set')
+  }
+
+  const url = `${baseUrl}${path}`
   const startTime = Date.now()
 
   let response: Response

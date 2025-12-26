@@ -1,9 +1,10 @@
 import { BrowserWindow, app } from 'electron'
 import path from 'node:path'
+import { findIconPath } from '../lib/utils'
 
 const isDev = !app.isPackaged
 
-let mainWindow: BrowserWindow | null = null
+let settingsWindow: BrowserWindow | null = null
 
 function showDock(): void {
   if (process.platform === 'darwin' && app.dock) {
@@ -11,55 +12,74 @@ function showDock(): void {
   }
 }
 
-function hideDock(): void {
-  if (process.platform === 'darwin' && app.dock) {
-    app.dock.hide()
-  }
-}
-
-export function createMainWindow(): BrowserWindow {
+export function createSettingsWindow(): BrowserWindow {
   showDock()
 
-  mainWindow = new BrowserWindow({
+  const iconPath = findIconPath()
+
+  console.log('iconPath', iconPath)
+
+  settingsWindow = new BrowserWindow({
     width: 500,
     height: 600,
     webPreferences: {
       preload: path.join(__dirname, '../preload.js'),
     },
+    show: true,
+    icon: iconPath || undefined,
   })
 
-  if (isDev) {
-    mainWindow.loadURL('http://localhost:4001')
-    // mainWindow.webContents.openDevTools()
-  } else {
-    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'))
+  if (iconPath) {
+    app.dock?.setIcon(iconPath)
+    settingsWindow.setIcon(iconPath)
   }
 
-  mainWindow.on('closed', () => {
-    mainWindow = null
-    hideDock()
+  if (isDev) {
+    settingsWindow.loadURL('http://localhost:4001')
+    // mainWindow.webContents.openDevTools()
+  } else {
+    const settingsPath = path.join(
+      __dirname,
+      '..',
+      '..',
+      'windows',
+      'settings',
+      'index.html',
+    )
+    settingsWindow.loadFile(settingsPath)
+  }
+
+  // Clean up reference when window is closed
+  settingsWindow.on('closed', () => {
+    settingsWindow = null
+    if (process.platform === 'darwin' && app.dock) {
+      app.dock.hide()
+    }
   })
 
-  mainWindow.on('hide', () => {
-    hideDock()
+  // Hide dock icon when window is hidden
+  settingsWindow.on('hide', () => {
+    if (process.platform === 'darwin' && app.dock) {
+      app.dock.hide()
+    }
   })
 
-  mainWindow.on('show', () => {
+  settingsWindow.on('show', () => {
     showDock()
   })
 
-  return mainWindow
+  return settingsWindow
 }
 
 export function getMainWindow(): BrowserWindow | null {
-  return mainWindow
+  return settingsWindow
 }
 
 export function showMainWindow(): void {
-  if (mainWindow) {
-    mainWindow.show()
-    mainWindow.focus()
+  if (settingsWindow) {
+    settingsWindow.show()
+    settingsWindow.focus()
   } else {
-    createMainWindow()
+    createSettingsWindow()
   }
 }

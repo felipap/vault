@@ -1,6 +1,6 @@
 import { app } from 'electron'
 
-const isDev = !app.isPackaged
+const isDev = true // !app.isPackaged
 
 function formatMessage(level: string, ...args: unknown[]): string {
   const timestamp = new Date().toISOString()
