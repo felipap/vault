@@ -2,6 +2,10 @@
 
 Latest: Dec 15, 2025
 
+## General
+
+- Use `npm` as the package manager.
+
 ## TypeScript Type Safety
 
 - NEVER use `as any` in TypeScript code

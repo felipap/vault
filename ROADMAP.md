@@ -5,6 +5,7 @@
 - [ ] Fix CI/CD
 - [ ] Fix notarization
 - [ ] Feat: implement an onboarding with info
+- [ ] Feat: export iMessage
 
 ## Done
 
