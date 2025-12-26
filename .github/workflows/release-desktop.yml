@@ -35,7 +35,7 @@ jobs:
         working-directory: .
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm install --frozen-lockfile
 
       - name: Import code signing certificate
         uses: apple-actions/import-codesign-certs@v1
@@ -53,10 +53,10 @@ jobs:
         working-directory: .
 
       - name: Build Electron app
-        run: pnpm run build
+        run: npm run build
 
       - name: Package Electron app
-        run: pnpm run pack
+        run: npm run pack
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
