@@ -3,9 +3,9 @@ import { DEFAULT_USER_ID, iMessageAttachments, iMessages } from "@/db/schema"
 import { and, eq, gte, sql } from "drizzle-orm"
 import { NextRequest } from "next/server"
 import { z } from "zod"
-import { authMobileRequest } from "../lib"
+import { protectApiRead, protectApiWrite } from "../lib"
 
-export const GET = authMobileRequest(async (request: NextRequest) => {
+export const GET = protectApiRead(async (request: NextRequest) => {
   console.log("GET /api/imessages")
 
   const { searchParams } = new URL(request.url)
@@ -46,7 +46,7 @@ export const GET = authMobileRequest(async (request: NextRequest) => {
   })
 })
 
-export const POST = authMobileRequest(async (request: NextRequest) => {
+export const POST = protectApiWrite(async (request: NextRequest) => {
   console.log("POST /api/imessages")
 
   const json = await request.json()

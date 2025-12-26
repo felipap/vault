@@ -3,14 +3,10 @@ import { db } from "@/db"
 import { Screenshots } from "@/db/schema"
 import { resizeScreenshot } from "@/lib/image-resize"
 import { config } from "@/lib/config"
-import { validateDeviceAuth } from "@/lib/device-auth"
+import { protectApiWrite } from "../lib"
 import sharp from "sharp"
 
-export async function POST(request: NextRequest) {
-  if (!validateDeviceAuth(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-
+export const POST = protectApiWrite(async (request: NextRequest) => {
   const contentType = request.headers.get("content-type") || ""
   if (!contentType.includes("multipart/form-data")) {
     return NextResponse.json(
@@ -46,10 +42,6 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // Optional metadata fields - add to schema then uncomment:
-  // const windowTitle = formData.get("windowTitle") as string | null
-  // const appName = formData.get("appName") as string | null
-
   const resizedBuffer = await resizeScreenshot(imageBuffer)
   const metadata = await sharp(resizedBuffer).metadata()
 
@@ -59,7 +51,6 @@ export async function POST(request: NextRequest) {
   const [screenshot] = await db
     .insert(Screenshots)
     .values({
-      // deviceId: deviceCheck.deviceDbId,
       data: dataUrl,
       width: metadata.width || 0,
       height: metadata.height || 0,
@@ -74,4 +65,4 @@ export async function POST(request: NextRequest) {
     sizeBytes: screenshot.sizeBytes,
     capturedAt: screenshot.capturedAt,
   })
-}
+})

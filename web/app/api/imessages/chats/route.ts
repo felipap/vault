@@ -2,54 +2,56 @@ import { db } from "@/db"
 import { DEFAULT_USER_ID } from "@/db/schema"
 import { sql } from "drizzle-orm"
 import { NextRequest } from "next/server"
-import { authMobileRequest } from "../../lib"
+import { CallerInfo, protectApiRead } from "../../lib"
 
-export const GET = authMobileRequest(async (request: NextRequest) => {
-  const { searchParams } = new URL(request.url)
-  const limitParam = searchParams.get("limit")
-  const offsetParam = searchParams.get("offset")
+export const GET = protectApiRead(
+  async (request: NextRequest, caller: CallerInfo) => {
+    const { searchParams } = new URL(request.url)
+    const limitParam = searchParams.get("limit")
+    const offsetParam = searchParams.get("offset")
 
-  if (!limitParam) {
-    return Response.json(
-      { error: "limit query parameter is required" },
-      { status: 400 }
-    )
+    if (!limitParam) {
+      return Response.json(
+        { error: "limit query parameter is required" },
+        { status: 400 }
+      )
+    }
+
+    const limit = parseInt(limitParam, 10)
+    const offset = offsetParam ? parseInt(offsetParam, 10) : 0
+
+    if (isNaN(limit) || limit < 1) {
+      return Response.json(
+        { error: "limit must be a positive integer" },
+        { status: 400 }
+      )
+    }
+
+    if (isNaN(offset) || offset < 0) {
+      return Response.json(
+        { error: "offset must be a non-negative integer" },
+        { status: 400 }
+      )
+    }
+
+    const startTime = Date.now()
+
+    const { chats } = await getLatestChats(limit, offset)
+
+    return Response.json({
+      success: true,
+      chats,
+      count: chats.length,
+      page: {
+        limit,
+        offset,
+      },
+      metadata: {
+        elapsedMs: Date.now() - startTime,
+      },
+    })
   }
-
-  const limit = parseInt(limitParam, 10)
-  const offset = offsetParam ? parseInt(offsetParam, 10) : 0
-
-  if (isNaN(limit) || limit < 1) {
-    return Response.json(
-      { error: "limit must be a positive integer" },
-      { status: 400 }
-    )
-  }
-
-  if (isNaN(offset) || offset < 0) {
-    return Response.json(
-      { error: "offset must be a non-negative integer" },
-      { status: 400 }
-    )
-  }
-
-  const startTime = Date.now()
-
-  const { chats } = await getLatestChats(limit, offset)
-
-  return Response.json({
-    success: true,
-    chats,
-    count: chats.length,
-    page: {
-      limit,
-      offset,
-    },
-    metadata: {
-      elapsedMs: Date.now() - startTime,
-    },
-  })
-})
+)
 
 interface Chat {
   chatId: string
