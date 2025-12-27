@@ -9,6 +9,7 @@
 - [ ] Feat: _Don't_ auto upload data when starting the app
 - [ ] Think about real-time authentication of features
 - [ ] End-to-end encryption of message texts
+- [ ] Security: store device secret in system keychain instead of plaintext JSON
 
 ## Later
 
