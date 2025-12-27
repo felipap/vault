@@ -21,12 +21,12 @@ In development, if `DASHBOARD_SECRET` is unset, auth is bypassed entirely.
 
 Devices authenticate via a shared secret:
 
-1. Set `DEVICE_SECRET` env var on the server
+1. Set `API_WRITE_SECRET` env var on the server
 2. Enter the same secret in the desktop app settings
 3. Desktop app sends it as `Authorization: Bearer <secret>` header
 4. Server rejects requests where the token doesn't match
 
-If `DEVICE_SECRET` is unset on the server, device auth is bypassed (for development).
+If `API_WRITE_SECRET` is unset on the server, device auth is bypassed (for development).
 
 ## Server security
 

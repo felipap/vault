@@ -68,7 +68,7 @@ export function MainTab() {
               placeholder="Enter the secret from your server"
             />
             <p className="text-xs text-[var(--text-color-secondary)] mt-1">
-              Must match DEVICE_SECRET on the server
+              Must match API_WRITE_SECRET on the server
             </p>
           </div>
         </div>

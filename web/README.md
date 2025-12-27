@@ -14,7 +14,7 @@ The server component of Context. This is a self-hosted API that:
 
 ### Optional
 
-- `DEVICE_SECRET` — API authentication token for device endpoints. If not set, API is open.
+- `API_WRITE_SECRET` — API authentication token for device endpoints. If not set, API is open.
 
 ### IP Whitelisting (Optional)
 
