@@ -7,7 +7,7 @@ if (!DASHBOARD_IP_WHITELIST) {
 
 export const API_WRITE_IP_WHITELIST = process.env.API_WRITE_IP_WHITELIST || ""
 if (!API_WRITE_IP_WHITELIST) {
-  throw Error("API_WRITE_IP_WHITELIST is not set")
+  console.error("API_WRITE_IP_WHITELIST is not set")
 }
 
 export const API_READ_IP_WHITELIST = process.env.API_READ_IP_WHITELIST || ""
@@ -15,7 +15,9 @@ if (!API_READ_IP_WHITELIST) {
   throw Error("API_READ_IP_WHITELIST is not set")
 }
 
-export function parseWhitelist(envVar: string | undefined): string[] | null {
+type Whitelist = string[]
+
+export function parseWhitelist(envVar: string | undefined): Whitelist | null {
   if (!envVar || envVar.trim() === "") {
     return null // No whitelist = allow all
   }
@@ -66,7 +68,15 @@ export function isApiIpWhitelistEnabled(): boolean {
   return Boolean(whitelist && whitelist.trim() !== "")
 }
 
-export function isIpAllowed(ip: string | null, whitelist: string[] | null): boolean {
+export function isDashboardIpWhitelistEnabled(): boolean {
+  const whitelist = process.env.DASHBOARD_IP_WHITELIST
+  return Boolean(whitelist && whitelist.trim() !== "")
+}
+
+export function isIpAllowed(
+  ip: string | null,
+  whitelist: string[] | null
+): boolean {
   // No whitelist configured = allow all
   if (whitelist === null) {
     return true

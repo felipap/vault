@@ -52,4 +52,3 @@ export async function resizeAttachmentImage(
 
   return outputBuffer.toString("base64")
 }
-

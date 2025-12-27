@@ -72,3 +72,4 @@ export async function getScreenshotData(id: string): Promise<string | null> {
   return screenshot?.data ?? null
 }
 
+
