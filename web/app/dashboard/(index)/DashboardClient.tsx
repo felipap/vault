@@ -85,7 +85,7 @@ export function DashboardClient() {
           <StatCard
             label="Total Chats"
             value={stats.totalChats.toLocaleString()}
-            href="/dashboard/chats"
+            href="/dashboard/messages"
           />
           <StatCard
             label="Total Contacts"

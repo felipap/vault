@@ -78,10 +78,7 @@ export function proxy(request: NextRequest) {
         const ip = getClientIp(request)
         if (!isIpAllowed(ip, whitelist)) {
           console.debug("/api: IP address not allowed", ip)
-          return NextResponse.json(
-            { error: "Forbidden", message: "IP address not allowed" },
-            { status: 403 }
-          )
+          return makeNonWhitelistedResponse()
         }
       } else {
         warnUnprotected("Write endpoint is not protected by IP whitelist")
@@ -94,10 +91,7 @@ export function proxy(request: NextRequest) {
         const ip = getClientIp(request)
         if (!isIpAllowed(ip, whitelist)) {
           console.debug("/api: IP address not allowed", ip)
-          return NextResponse.json(
-            { error: "Forbidden", message: "IP address not allowed" },
-            { status: 403 }
-          )
+          return makeNonWhitelistedResponse()
         }
       } else {
         warnUnprotected("Read endpoint is not protected by IP whitelist")
@@ -109,7 +103,7 @@ export function proxy(request: NextRequest) {
 
     const token = getBearerToken(request)
     if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return makeNonWhitelistedResponse()
     }
 
     if (isWriteEndpoint) {
@@ -136,10 +130,7 @@ export function proxy(request: NextRequest) {
       const ip = getClientIp(request)
       if (!isIpAllowed(ip, whitelist)) {
         console.debug("/dashboard: IP address not allowed", ip)
-        return NextResponse.json(
-          { error: "Forbidden", message: "IP address not allowed" },
-          { status: 403 }
-        )
+        return makeNonWhitelistedResponse()
       }
     } else {
       warnUnprotected("Dashboard is not protected by IP whitelist")
@@ -231,4 +222,10 @@ export function getClientIp(request: NextRequest): string | null {
 function warnUnprotected(message: string) {
   // TODO something more dramatic
   console.error("ATTENTION:", message, "🥊".repeat(100))
+}
+
+// Return 404 instead of 403 to avoid revealing that a protected resource
+// exists.
+function makeNonWhitelistedResponse() {
+  return new NextResponse(null, { status: 404 })
 }

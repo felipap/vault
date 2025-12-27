@@ -19,7 +19,7 @@ type Whitelist = string[]
 
 export function parseWhitelist(envVar: string | undefined): Whitelist | null {
   if (!envVar || envVar.trim() === "") {
-    return null // No whitelist = allow all
+    throw new Error("!envVar")
   }
   return envVar
     .split(",")
