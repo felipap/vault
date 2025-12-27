@@ -19,11 +19,11 @@
     "**/.env.example": true
   },
   "files.exclude": {
-    "**/.env": true,
-    "**/Info.plist": true,
-    "**/tsconfig.tsbuildinfo": true,
-    "**/package-lock.json": true,
-    "**/pnpm-lock.yaml": true,
-    "**/tray-animations": true,
+    // "**/.env": true,
+    // "**/Info.plist": true,
+    // "**/tsconfig.tsbuildinfo": true,
+    // "**/package-lock.json": true,
+    // "**/pnpm-lock.yaml": true,
+    // "**/tray-animations": true,
   }
 }

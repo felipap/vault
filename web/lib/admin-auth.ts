@@ -2,19 +2,19 @@ import { cookies } from "next/headers"
 
 const COOKIE_NAME = "context_admin"
 
-const ADMIN_SECRET = process.env.ADMIN_SECRET || ""
-if (!ADMIN_SECRET) {
-  throw new Error("ADMIN_SECRET is not set")
+const DASHBOARD_SECRET = process.env.DASHBOARD_SECRET || ""
+if (!DASHBOARD_SECRET) {
+  throw new Error("DASHBOARD_SECRET is not set")
 }
 
 export async function isAuthenticated(): Promise<boolean> {
   const cookieStore = await cookies()
   const token = cookieStore.get(COOKIE_NAME)?.value
-  return token === ADMIN_SECRET
+  return token === DASHBOARD_SECRET
 }
 
 export async function setAuthCookie(secret: string): Promise<boolean> {
-  const expected = process.env.ADMIN_SECRET
+  const expected = process.env.DASHBOARD_SECRET
   if (!expected || secret !== expected) {
     return false
   }

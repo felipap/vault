@@ -57,6 +57,7 @@ export async function apiRequest<T = unknown>({
       },
     })
   } catch (error) {
+    console.log(`url: ${url}`)
     addRequestLog({
       timestamp: startTime,
       method,
@@ -124,6 +125,7 @@ export async function apiFormDataRequest<T = unknown>({
       headers: getAuthHeaders(),
     })
   } catch (error) {
+    console.log(`url: ${url}`)
     addRequestLog({
       timestamp: startTime,
       method: 'POST',
@@ -138,6 +140,8 @@ export async function apiFormDataRequest<T = unknown>({
   const duration = Date.now() - startTime
 
   if (!response.ok) {
+    const text = await response.text()
+    console.log(`url: ${url}`, text)
     addRequestLog({
       timestamp: startTime,
       method: 'POST',

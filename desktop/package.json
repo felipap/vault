@@ -7,7 +7,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "concurrently \"npm run dev:renderer-settings\" \"npm run dev:watch-main\"",
-    "dev:watch-main": "NODE_ENV=development nodemon --watch backend --ext ts --exec \"npm run build:backend && electron dist/backend/main.js\"",
+    "dev:watch-main": "NODE_ENV=development nodemon --watch backend --ext ts --exec \"npm run build:backend && electron --enable-source-maps dist/backend/main.js\"",
     "dev:renderer-settings": "vite --config vite.settings.config.js",
     "build": "npm run build:backend && npm run build:renderers",
     "build:backend": "tsc -p backend/tsconfig.json",

@@ -3,25 +3,185 @@
 // otherwise.
 
 import {
-  API_READ_IP_WHITELIST,
   DASHBOARD_IP_WHITELIST,
   isIpAllowed,
   parseWhitelist,
 } from "@/lib/ip-whitelist"
+import assert from "assert"
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 
+const API_READ_IP_WHITELIST = process.env.API_READ_IP_WHITELIST || ""
+if (!API_READ_IP_WHITELIST) {
+  console.warn("API_READ_IP_WHITELIST is not set")
+}
+
+const API_WRITE_IP_WHITELIST = process.env.API_WRITE_IP_WHITELIST
+if (!API_WRITE_IP_WHITELIST) {
+  console.warn("API_WRITE_IP_WHITELIST is not set")
+}
+
+const API_WRITE_SECRET = process.env.API_WRITE_SECRET || ""
+if (!API_WRITE_SECRET) {
+  throw Error("API_WRITE_SECRET is not set")
+}
+assert(API_WRITE_SECRET.length > 10, "API_WRITE_SECRET is too short")
+
+const API_READ_SECRET = process.env.API_READ_SECRET || ""
+if (!API_READ_SECRET) {
+  throw Error("API_READ_SECRET is not set")
+}
+assert(API_READ_SECRET.length > 10, "API_READ_SECRET is too short")
+
+const DASHBOARD_SECRET = process.env.DASHBOARD_SECRET || ""
+if (!DASHBOARD_SECRET) {
+  throw Error("DASHBOARD_SECRET is not set")
+}
+assert(DASHBOARD_SECRET.length > 20, "DASHBOARD_SECRET is too short")
+
 const COOKIE_NAME = "context_admin"
-const DEVICE_SECRET = process.env.DEVICE_SECRET || ""
-if (!DEVICE_SECRET) {
-  throw Error("DEVICE_SECRET is not set")
+
+export function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
+  // API routes
+  if (pathname.startsWith("/api/")) {
+    // Check if IP is whitelisted, then check the secret.
+    //
+    // Read and write handlers MAY be protected by IP whitelist. For writing,
+    // it'd require users of the Context desktop app to be behind a fixed IP,
+    // which is hard to do. Reading use-cases will depend on what users do with
+    // their context.
+
+    const isWriteEndpoint = isApiWriteRequest(request)
+    if (isWriteEndpoint) {
+      if (API_WRITE_IP_WHITELIST) {
+        // Validate that request IP is allowed.
+        const whitelist = parseWhitelist(API_WRITE_IP_WHITELIST)
+        const ip = getClientIp(request)
+        if (!isIpAllowed(ip, whitelist)) {
+          console.debug("/api: IP address not allowed", ip)
+          return NextResponse.json(
+            { error: "Forbidden", message: "IP address not allowed" },
+            { status: 403 }
+          )
+        }
+      } else {
+        warnUnprotected("Write endpoint is not protected by IP whitelist")
+      }
+    } else {
+      // Read endpoints MUST be protected by
+      if (API_READ_IP_WHITELIST) {
+        // Validate that request IP is allowed.
+        const whitelist = parseWhitelist(API_READ_IP_WHITELIST)
+        const ip = getClientIp(request)
+        if (!isIpAllowed(ip, whitelist)) {
+          console.debug("/api: IP address not allowed", ip)
+          return NextResponse.json(
+            { error: "Forbidden", message: "IP address not allowed" },
+            { status: 403 }
+          )
+        }
+      } else {
+        warnUnprotected("Read endpoint is not protected by IP whitelist")
+      }
+    }
+
+    // We check the token after because we treat whitelists first, to give back
+    // the smallest amount of information possible.
+
+    const token = getBearerToken(request)
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    if (isWriteEndpoint) {
+      if (token !== API_WRITE_SECRET) {
+        console.debug(`/api: Unauthorized (token mismatch)`)
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      }
+    } else {
+      if (token !== API_READ_SECRET) {
+        console.debug(`/api: Unauthorized (token mismatch)`)
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      }
+    }
+
+    return NextResponse.next()
+  }
+
+  // Validate dashboard access
+  if (pathname.startsWith("/dashboard")) {
+    // if IP whitelist is enabled,
+    if (DASHBOARD_IP_WHITELIST) {
+      // validate that the request IP.
+      const whitelist = parseWhitelist(DASHBOARD_IP_WHITELIST)
+      const ip = getClientIp(request)
+      if (!isIpAllowed(ip, whitelist)) {
+        console.debug("/dashboard: IP address not allowed", ip)
+        return NextResponse.json(
+          { error: "Forbidden", message: "IP address not allowed" },
+          { status: 403 }
+        )
+      }
+    } else {
+      warnUnprotected("Dashboard is not protected by IP whitelist")
+    }
+
+    const cookieSecret = getDashboardSecretFromCookie(request)
+    if (!cookieSecret) {
+      return NextResponse.redirect(new URL("/", request.url))
+    }
+    if (cookieSecret !== DASHBOARD_SECRET) {
+      console.debug("/dashboard: Unauthorized (token mismatch)")
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+    if (!cookieSecret) {
+      return NextResponse.redirect(new URL("/", request.url))
+    }
+  }
+
+  return NextResponse.next()
 }
 
-export function isDashboardIpWhitelistEnabled(): boolean {
-  return Boolean(DASHBOARD_IP_WHITELIST && DASHBOARD_IP_WHITELIST.trim() !== "")
+export const config = {
+  matcher: ["/", "/dashboard/:path*", "/api/:path*"],
 }
 
-function getClientIp(request: NextRequest): string | null {
+function isApiWriteRequest(request: NextRequest): boolean {
+  const pathname = request.nextUrl.pathname
+  if (!pathname.startsWith("/api")) {
+    throw Error("only use fn with API routes")
+  }
+  return (
+    request.method === "POST" ||
+    request.method === "PUT" ||
+    request.method === "DELETE" ||
+    request.method === "PATCH"
+  )
+}
+
+function getBearerToken(request: NextRequest): string | null {
+  const authHeader = request.headers.get("authorization")
+  if (!authHeader?.startsWith("Bearer ")) {
+    return null
+  }
+  return authHeader.slice(7)
+}
+
+function getDashboardSecretFromCookie(
+  request: NextRequest
+): string | undefined {
+  return request.cookies.get(COOKIE_NAME)?.value
+}
+
+//
+//
+//
+//
+// Get IP from request
+
+export function getClientIp(request: NextRequest): string | null {
   // Check common headers for real IP (when behind proxy/load balancer)
   const forwardedFor = request.headers.get("x-forwarded-for")
   if (forwardedFor) {
@@ -49,100 +209,7 @@ function getClientIp(request: NextRequest): string | null {
   return null
 }
 
-export function validateDashboardIp(request: NextRequest): {
-  allowed: boolean
-  ip: string | null
-} {
-  const whitelist = parseWhitelist(process.env.DASHBOARD_IP_WHITELIST)
-  const ip = getClientIp(request)
-
-  return {
-    allowed: isIpAllowed(ip, whitelist),
-    ip,
-  }
-}
-
-function validateApiRequest(
-  request: NextRequest
-): { valid: true } | { valid: false; response: NextResponse } {
-  const ip = getClientIp(request)
-
-  // Check IP whitelist
-  const whitelist = parseWhitelist(API_READ_IP_WHITELIST)
-  if (!isIpAllowed(ip, whitelist)) {
-    return {
-      valid: false,
-      response: NextResponse.json(
-        { error: "Forbidden", message: "IP address not allowed" },
-        { status: 403 }
-      ),
-    }
-  }
-
-  // Check device secret
-  if (DEVICE_SECRET) {
-    const authHeader = request.headers.get("authorization")
-    if (!authHeader?.startsWith("Bearer ")) {
-      return {
-        valid: false,
-        response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
-      }
-    }
-    const token = authHeader.slice(7)
-    if (token !== DEVICE_SECRET) {
-      return {
-        valid: false,
-        response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
-      }
-    }
-  }
-
-  return { valid: true }
-}
-
-export function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl
-
-  // API routes - enforce authentication at middleware level
-  if (pathname.startsWith("/api/")) {
-    const apiAuth = validateApiRequest(request)
-    if (!apiAuth.valid) {
-      return apiAuth.response
-    }
-    return NextResponse.next()
-  }
-
-  // Check dashboard IP whitelist first
-  if (isDashboardIpWhitelistEnabled()) {
-    const ipCheck = validateDashboardIp(request)
-    if (!ipCheck.allowed) {
-      return new NextResponse("Forbidden: IP address not allowed", {
-        status: 403,
-      })
-    }
-  } else {
-    //
-  }
-
-  const token = request.cookies.get(COOKIE_NAME)?.value
-  const secret = process.env.ADMIN_SECRET
-  const isAuthenticated = !secret || token === secret
-
-  if (pathname.startsWith("/dashboard")) {
-    if (!isAuthenticated) {
-      return NextResponse.redirect(new URL("/", request.url))
-    }
-  }
-
-  if (pathname === "/") {
-    if (isAuthenticated && secret) {
-      return NextResponse.redirect(new URL("/dashboard", request.url))
-    }
-  }
-
-  return NextResponse.next()
-}
-
-export const config = {
-  matcher: ["/", "/dashboard/:path*", "/api/:path*"],
+function warnUnprotected(message: string) {
+  // TODO something more dramatic
+  console.error("ATTENTION:", message, "🥊".repeat(100))
 }

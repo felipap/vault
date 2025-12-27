@@ -7,15 +7,15 @@ There are two auth flows: one for the admin dashboard, one for devices (Electron
 
 ### Admin Dashboard
 
-A passphrase-based system. The passphrase is set via `ADMIN_SECRET` env var on the server.
+A passphrase-based system. The passphrase is set via `DASHBOARD_SECRET` env var on the server.
 
 1. User enters passphrase on login page
-2. Server compares it to `ADMIN_SECRET`
+2. Server compares it to `DASHBOARD_SECRET`
 3. If valid, sets an httpOnly cookie (`context_admin`) containing the passphrase
 4. Cookie settings: httpOnly, secure in production, sameSite=lax, 1 year expiry
-5. Subsequent requests check if cookie value matches `ADMIN_SECRET`
+5. Subsequent requests check if cookie value matches `DASHBOARD_SECRET`
 
-In development, if `ADMIN_SECRET` is unset, auth is bypassed entirely.
+In development, if `DASHBOARD_SECRET` is unset, auth is bypassed entirely.
 
 ### Device Auth (Desktop App)
 

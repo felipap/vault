@@ -9,7 +9,7 @@ The server component of Context. This is a self-hosted API that:
 
 ### Required
 
-- `ADMIN_SECRET` — Password for dashboard login
+- `DASHBOARD_SECRET` — Password for dashboard login
 - `DATABASE_URL` — PostgreSQL connection string
 
 ### Optional

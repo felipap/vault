@@ -1,11 +1,16 @@
 import {
   API_READ_IP_WHITELIST,
   API_WRITE_IP_WHITELIST,
+  IpValidationResult,
   parseWhitelist,
   validateIp,
-  IpValidationResult,
 } from "@/lib/ip-whitelist"
 import { NextRequest } from "next/server"
+
+const DEVICE_SECRET = process.env.DEVICE_SECRET || ""
+if (!DEVICE_SECRET) {
+  throw Error("DEVICE_SECRET is not set")
+}
 
 export type CallerInfo = {
   ip: string | null
@@ -21,91 +26,65 @@ type NextHandler = (request: NextRequest) => Promise<Response>
 // Reading can be more sensitive than writing.
 export function protectApiRead(handler: ProtectedHandler): NextHandler {
   return async (request: NextRequest): Promise<Response> => {
-    const authResult = validateForRead(request)
-    if (!authResult.valid) {
-      return authErrorResponse(authResult)
+    const ip = getClientIp(request)
+
+    // Check IP whitelist (required for read)
+    const ipCheck = validateApiIpForRead(request)
+    if (!ipCheck.allowed) {
+      console.warn("[protectApiRead] IP address not allowed", ip)
+
+      return Response.json(
+        { error: "Forbidden", message: "IP address not allowed" },
+        { status: 403 }
+      )
     }
-    return handler(request, { ip: authResult.ip })
+
+    // Check device secret
+    if (!validateDeviceSecret(request)) {
+      console.warn("[protectApiRead] Device secret not valid", ip)
+
+      return Response.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    return handler(request, { ip })
   }
 }
 
 export function protectApiWrite(handler: ProtectedHandler): NextHandler {
   return async (request: NextRequest): Promise<Response> => {
-    const authResult = validateForWrite(request)
-    if (!authResult.valid) {
-      return authErrorResponse(authResult)
+    const ip = getClientIp(request)
+
+    // Check IP whitelist (optional for write)
+    const ipCheck = validateApiIpForWrite(request)
+    if (!ipCheck.allowed) {
+      console.warn("[protectApiWrite] IP address not allowed", ip)
+      return Response.json(
+        { error: "Forbidden", message: "IP address not allowed" },
+        { status: 403 }
+      )
     }
-    return handler(request, { ip: authResult.ip })
+
+    // Check device secret
+    if (!validateDeviceSecret(request)) {
+      console.warn("[protectApiWrite] Device secret not valid", ip)
+      return Response.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    return handler(request, { ip })
   }
-}
-
-type AuthResult =
-  | { valid: true; ip: string | null }
-  | { valid: false; reason: "ip_blocked"; ip: string | null }
-  | { valid: false; reason: "unauthorized" }
-
-function authErrorResponse(
-  authResult: Extract<AuthResult, { valid: false }>
-): Response {
-  if (authResult.reason === "ip_blocked") {
-    return Response.json(
-      { error: "Forbidden", message: "IP address not allowed" },
-      { status: 403 }
-    )
-  }
-  return Response.json({ error: "Unauthorized" }, { status: 401 })
-}
-
-function validateForRead(request: NextRequest): AuthResult {
-  const ip = getClientIp(request)
-
-  // Check IP whitelist (required for read)
-  const ipCheck = validateApiIpForRead(request)
-  if (!ipCheck.allowed) {
-    return { valid: false, reason: "ip_blocked", ip }
-  }
-
-  // Check device secret
-  if (!validateDeviceSecret(request)) {
-    return { valid: false, reason: "unauthorized" }
-  }
-
-  return { valid: true, ip }
-}
-
-function validateForWrite(request: NextRequest): AuthResult {
-  const ip = getClientIp(request)
-
-  // Check IP whitelist (optional for write)
-  const ipCheck = validateApiIpForWrite(request)
-  if (!ipCheck.allowed) {
-    return { valid: false, reason: "ip_blocked", ip }
-  }
-
-  // Check device secret
-  if (!validateDeviceSecret(request)) {
-    return { valid: false, reason: "unauthorized" }
-  }
-
-  return { valid: true, ip }
 }
 
 function validateDeviceSecret(request: NextRequest): boolean {
-  const expected = process.env.DEVICE_SECRET
-  if (!expected) {
-    return true
-  }
-
   const authHeader = request.headers.get("authorization")
   if (!authHeader?.startsWith("Bearer ")) {
     return false
   }
 
   const token = authHeader.slice(7)
-  return token === expected
+  return token === DEVICE_SECRET
 }
 
-function getClientIp(request: NextRequest): string | null {
+export function getClientIp(request: NextRequest): string | null {
   // Check common headers for real IP (when behind proxy/load balancer)
   const forwardedFor = request.headers.get("x-forwarded-for")
   if (forwardedFor) {
