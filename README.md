@@ -10,13 +10,21 @@ To deploy the web app, you can either:
 
 ### One-Click Deploy to Vercel
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/felipap/contexter&root-directory=web&env=DATABASE_URL,DASHBOARD_SECRET,API_WRITE_SECRET&envDescription=Required%20environment%20variables%20for%20Context&envLink=https://github.com/felipap/contexter/blob/main/web/README.md%23setup)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/felipap/contexter&root-directory=web&env=DATABASE_URL,DASHBOARD_SECRET,API_WRITE_SECRET,API_READ_SECRET&envDescription=Required%20environment%20variables%20for%20Context&envLink=https://github.com/felipap/contexter/blob/main/web/README.md%23setup)
 
 Required environment variables:
 
 - `DATABASE_URL` — PostgreSQL connection string (you can use [Vercel Postgres](https://vercel.com/docs/storage/vercel-postgres) or [Neon](https://neon.tech))
 - `DASHBOARD_SECRET` — Passphrase to access the web dashboard
-- `API_WRITE_SECRET` — Secret for authenticating the Electron app
+- `API_WRITE_SECRET` — Secret for authenticating the Electron app when writing data
+- `API_READ_SECRET` — Secret for authenticating API read requests
+- `CRON_SECRET` — Secret for Vercel cron jobs (screenshot cleanup)
+
+Optional environment variables:
+
+- `DASHBOARD_IP_WHITELIST` — Comma-separated IPs allowed to access the dashboard
+- `API_WRITE_IP_WHITELIST` — Comma-separated IPs allowed to write data
+- `API_READ_IP_WHITELIST` — Comma-separated IPs allowed to read data
 
 For rate limiting and other security considerations, see [SECURITY.md](./SECURITY.md).
 

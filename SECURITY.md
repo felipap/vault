@@ -32,14 +32,15 @@ If `API_WRITE_SECRET` is unset on the server, device auth is bypassed (for devel
 
 API read is actually more sensitive than write.
 
-## Rate Limiting (Vercel)
+## Rate Limiting
 
-Vercel's `vercel.json` supports WAF rules but only `challenge` and `deny` actions—not rate limiting.
+Configure rate limiting in the Vercel dashboard under **Firewall → + New Rule**.
 
-For rate limiting, your options are:
+Recommended rule for API endpoints:
 
-1. **Vercel Dashboard WAF** — Configure in Firewall tab, no code needed
-2. **@vercel/firewall SDK** — Programmatic, but still requires dashboard rule setup first
-3. **@upstash/ratelimit** — Fully code-based, requires Upstash Redis (free tier available)
+- **Name:** `api-rate-limit`
+- **If:** Request Path starts with `/api`
+- **Rate Limit:** Fixed Window, 300 seconds, 10 requests, Key: IP Address
+- **Then:** Too Many Requests (429)
 
-See: https://vercel.com/docs/vercel-firewall/vercel-waf/rate-limiting
+See [docs/firewall-example.png](./docs/firewall-example.png) for reference.

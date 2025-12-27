@@ -7,12 +7,12 @@
 - [ ] Feat: whitelist or blacklist messages from particular numbers
 - [ ] Feat: Allow expire data after certain time
 - [ ] Feat: _Don't_ auto upload data when starting the app
-- [ ] Think about real-time authentication of features
+- [ ] Think about real-time authentication by asking user directly
 - [ ] End-to-end encryption of message texts
 
 ## Later
 
-- [ ]
+...
 
 ## Done
 
