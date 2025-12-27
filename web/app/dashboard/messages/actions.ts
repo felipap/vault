@@ -4,6 +4,7 @@ import { isAuthenticated } from "@/lib/admin-auth"
 import { db } from "@/db"
 import { DEFAULT_USER_ID, iMessages } from "@/db/schema"
 import { desc, eq, sql } from "drizzle-orm"
+import { unauthorized } from "next/navigation"
 
 export type Message = {
   id: string
@@ -28,7 +29,7 @@ export async function getMessages(
   pageSize: number = 20
 ): Promise<MessagesPage> {
   if (!(await isAuthenticated())) {
-    throw new Error("Unauthorized")
+    unauthorized()
   }
 
   const offset = (page - 1) * pageSize

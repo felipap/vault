@@ -4,6 +4,7 @@ import { db } from "@/db"
 import { DEFAULT_USER_ID, iMessages, Screenshots } from "@/db/schema"
 import { isAuthenticated } from "@/lib/admin-auth"
 import { eq, sql } from "drizzle-orm"
+import { unauthorized } from "next/navigation"
 
 export type DashboardStats = {
   totalScreenshots: number
@@ -15,7 +16,7 @@ export type DashboardStats = {
 
 export async function getDashboardStats(): Promise<DashboardStats> {
   if (!(await isAuthenticated())) {
-    throw new Error("Unauthorized")
+    unauthorized()
   }
 
   const [screenshotStats] = await db

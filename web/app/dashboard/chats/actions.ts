@@ -4,6 +4,7 @@ import { isAuthenticated } from "@/lib/admin-auth"
 import { db } from "@/db"
 import { DEFAULT_USER_ID } from "@/db/schema"
 import { sql } from "drizzle-orm"
+import { unauthorized } from "next/navigation"
 
 export type Chat = {
   chatId: string
@@ -29,7 +30,7 @@ export async function getChats(
   pageSize: number = 20
 ): Promise<ChatsPage> {
   if (!(await isAuthenticated())) {
-    throw new Error("Unauthorized")
+    unauthorized()
   }
 
   const offset = (page - 1) * pageSize

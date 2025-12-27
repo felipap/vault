@@ -4,6 +4,7 @@ import { isAuthenticated } from "@/lib/admin-auth"
 import { db } from "@/db"
 import { Screenshots } from "@/db/schema"
 import { desc, eq, sql } from "drizzle-orm"
+import { unauthorized } from "next/navigation"
 
 export type Screenshot = {
   id: string
@@ -26,7 +27,7 @@ export async function getScreenshots(
   pageSize: number = 20
 ): Promise<ScreenshotsPage> {
   if (!(await isAuthenticated())) {
-    throw new Error("Unauthorized")
+    unauthorized()
   }
 
   const offset = (page - 1) * pageSize
@@ -61,7 +62,7 @@ export async function getScreenshots(
 
 export async function getScreenshotData(id: string): Promise<string | null> {
   if (!(await isAuthenticated())) {
-    throw new Error("Unauthorized")
+    unauthorized()
   }
 
   const screenshot = await db.query.Screenshots.findFirst({

@@ -4,6 +4,7 @@ import { isAuthenticated } from "@/lib/admin-auth"
 import { db } from "@/db"
 import { DEFAULT_USER_ID } from "@/db/schema"
 import { sql } from "drizzle-orm"
+import { unauthorized } from "next/navigation"
 
 export type Contact = {
   contact: string
@@ -26,7 +27,7 @@ export async function getContacts(
   pageSize: number = 20
 ): Promise<ContactsPage> {
   if (!(await isAuthenticated())) {
-    throw new Error("Unauthorized")
+    unauthorized()
   }
 
   const offset = (page - 1) * pageSize
@@ -87,6 +88,8 @@ export async function getContacts(
     lastMessageText: row.last_message_text,
     lastMessageFromMe: row.last_message_from_me === 1,
   }))
+
+  console.log(`Found ${contacts.length} contacts`)
 
   return {
     contacts,
