@@ -12,9 +12,14 @@
     "**/dist-electron": true,
     "**/tsconfig.tsbuildinfo": true,
     "**/package-lock.json": true,
-    "**/pnpm-lock.yaml": true
+    "**/pnpm-lock.yaml": true,
+    // Prevent showing in streams
+    ".env": true,
+    "**/.env": true,
+    "**/.env.example": true
   },
   "files.exclude": {
+    "**/.env": true,
     "**/Info.plist": true,
     "**/tsconfig.tsbuildinfo": true,
     "**/package-lock.json": true,
