@@ -1,7 +1,7 @@
 {
   "name": "context-desktop",
   "productName": "Context",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Context desktop app",
   "main": "dist/backend/main.js",
   "license": "MIT",
@@ -10,9 +10,9 @@
     "dev:watch-main": "NODE_ENV=development nodemon --watch backend --ext ts --exec \"npm run build:backend && electron --enable-source-maps dist/backend/main.js\"",
     "dev:renderer-settings": "vite --config vite.settings.config.js",
     "build": "npm run build:backend && npm run build:renderers",
-    "build:backend": "tsc -p backend/tsconfig.json",
+    "build:backend": "tsc -p tsconfig.backend.json",
     "build:renderers": "vite build --config vite.settings.config.js",
-    "watch:main": "tsc -p backend/tsconfig.json --watch --preserveWatchOutput",
+    "watch:main": "tsc -p tsconfig.backend.json --watch --preserveWatchOutput",
     "pack": "npm run build && electron-builder --publish=never",
     "pack-local": "npm run build && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --dir --publish=never --config.mac.identity=null && cp -r ./dist-electron/mac-arm64/Context.app /Applications/",
     "start": "electron .",
@@ -21,7 +21,7 @@
     "postinstall": "electron-builder install-app-deps && electron-rebuild -f -w better-sqlite3,sharp",
     "ts-check": "npm run ts-check-windows && npm run ts-check-backend",
     "ts-check-windows": "tsc -p windows/tsconfig.json --noEmit",
-    "ts-check-backend": "tsc -p backend/tsconfig.json --noEmit"
+    "ts-check-backend": "tsc -p tsconfig.backend.json --noEmit"
   },
   "prettier": {
     "singleQuote": true,
