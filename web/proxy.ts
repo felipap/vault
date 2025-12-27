@@ -148,7 +148,7 @@ export function proxy(request: NextRequest) {
     const cookieToken = getDashboardTokenFromCookie(request)
     if (!cookieToken) {
       console.debug("/dashboard: Unauthorized (token missing)")
-      return NextResponse.redirect(new URL("/", request.url))
+      return NextResponse.redirect(new URL("/sign-in", request.url))
     }
     if (!secureCompare(cookieToken, EXPECTED_DASHBOARD_TOKEN)) {
       console.debug("/dashboard: Unauthorized (token mismatch)")
@@ -160,7 +160,7 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/dashboard/:path*", "/api/:path*"],
+  matcher: ["/sign-in", "/dashboard/:path*", "/api/:path*"],
 }
 
 function isApiWriteRequest(request: NextRequest): boolean {
@@ -184,9 +184,7 @@ function getBearerToken(request: NextRequest): string | null {
   return authHeader.slice(7)
 }
 
-function getDashboardTokenFromCookie(
-  request: NextRequest
-): string | undefined {
+function getDashboardTokenFromCookie(request: NextRequest): string | undefined {
   return request.cookies.get(COOKIE_NAME)?.value
 }
 
