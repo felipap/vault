@@ -61,7 +61,7 @@ export async function apiRequest<T = unknown>({
     addRequestLog({
       timestamp: startTime,
       method,
-      path,
+      url,
       isError: true,
       duration: Date.now() - startTime,
       text: error instanceof Error ? error.message : 'Network error',
@@ -76,7 +76,7 @@ export async function apiRequest<T = unknown>({
     addRequestLog({
       timestamp: startTime,
       method,
-      path,
+      url,
       isError: true,
       status: response.status,
       duration,
@@ -89,7 +89,7 @@ export async function apiRequest<T = unknown>({
   addRequestLog({
     timestamp: startTime,
     method,
-    path,
+    url,
     isError: false,
     status: response.status,
     duration,
@@ -129,7 +129,7 @@ export async function apiFormDataRequest<T = unknown>({
     addRequestLog({
       timestamp: startTime,
       method: 'POST',
-      path,
+      url,
       isError: true,
       duration: Date.now() - startTime,
       text: error instanceof Error ? error.message : 'Network error',
@@ -145,7 +145,7 @@ export async function apiFormDataRequest<T = unknown>({
     addRequestLog({
       timestamp: startTime,
       method: 'POST',
-      path,
+      url,
       isError: true,
       status: response.status,
       duration,
@@ -157,7 +157,7 @@ export async function apiFormDataRequest<T = unknown>({
   addRequestLog({
     timestamp: startTime,
     method: 'POST',
-    path,
+    url,
     isError: false,
     status: response.status,
     duration,

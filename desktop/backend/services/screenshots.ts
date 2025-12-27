@@ -98,12 +98,6 @@ async function runNow(): Promise<void> {
   } catch (error) {
     console.error('[screenshots] Manual capture failed:', error)
   }
-
-  // Restart the clock after manual run
-  if (captureInterval) {
-    clearTimeout(captureInterval)
-    scheduleNextCapture()
-  }
 }
 
 function getNextRunTime(): Date | null {

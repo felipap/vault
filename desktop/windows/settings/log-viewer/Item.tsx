@@ -55,7 +55,7 @@ export function LogItem({ log, showDate }: Props) {
         </span>
       </td>
       <td className="py-2.5 font-mono text-xs text-[var(--text-color-secondary)]">
-        {log.path}
+        {log.url}
       </td>
       <td className="py-2.5">
         <StatusBadge isError={log.isError} status={log.status} />

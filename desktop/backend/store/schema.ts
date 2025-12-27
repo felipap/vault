@@ -4,7 +4,7 @@ export type ApiRequestLog = {
   id: string
   timestamp: number
   method: string
-  path: string
+  url: string
   isError: boolean
   status?: number
   duration: number
