@@ -10,8 +10,13 @@
 - [ ] Think about real-time authentication of features
 - [ ] End-to-end encryption of message texts
 
+## Later
+
+- [ ]
+
 ## Done
 
+- [x] Auto delete screenshots after 24 hours
 - [x] Whitelisting IPs
 - [x] Fix: local packing taking too long
 - [x] Feat: desktop icon
