@@ -84,6 +84,11 @@ function isRunning(): boolean {
 }
 
 async function runNow(): Promise<void> {
+  const config = store.get('screenCapture')
+  if (!config.enabled) {
+    throw new Error('Screen capture is disabled')
+  }
+
   try {
     await captureAndUpload()
   } catch (error) {
@@ -102,12 +107,17 @@ function getTimeUntilNextRun(): number {
   return Math.max(0, nextCaptureTime.getTime() - Date.now())
 }
 
+function isEnabled(): boolean {
+  return store.get('screenCapture').enabled
+}
+
 export const screenshotsService: Service = {
   name: 'screenshots',
   start,
   stop,
   restart,
   isRunning,
+  isEnabled,
   runNow,
   getNextRunTime,
   getTimeUntilNextRun,

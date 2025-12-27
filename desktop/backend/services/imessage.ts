@@ -145,6 +145,11 @@ function isRunning(): boolean {
 }
 
 async function runNow(): Promise<void> {
+  const config = store.get('imessageExport')
+  if (!config.enabled) {
+    throw new Error('iMessage export is disabled')
+  }
+
   try {
     if (!sdk) {
       sdk = createIMessageSDK()
@@ -164,6 +169,10 @@ function getTimeUntilNextRun(): number {
     return 0
   }
   return Math.max(0, nextExportTime.getTime() - Date.now())
+}
+
+function isEnabled(): boolean {
+  return store.get('imessageExport').enabled
 }
 
 // Backfill state
@@ -265,6 +274,7 @@ export const imessageService: Service = {
   stop,
   restart,
   isRunning,
+  isEnabled,
   runNow,
   getNextRunTime,
   getTimeUntilNextRun,

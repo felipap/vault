@@ -4,6 +4,7 @@ export type Service = {
   stop: () => void
   restart: () => void
   isRunning: () => boolean
+  isEnabled: () => boolean
   runNow: () => Promise<void>
   getNextRunTime: () => Date | null
   getTimeUntilNextRun: () => number

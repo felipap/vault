@@ -1,6 +1,6 @@
 // Data is stored at:
 // - ~/Library/Application Support/Context/data.json
-// - ~/Library/Application Support/ContextDev/data.json (dev)
+// - ~/Library/Application Support/ContextDev/data.json
 
 import { app } from 'electron'
 import Store from 'electron-store'

@@ -1,4 +1,10 @@
-import { app, Menu, MenuItemConstructorOptions, Tray, nativeImage } from 'electron'
+import {
+  app,
+  Menu,
+  MenuItemConstructorOptions,
+  Tray,
+  nativeImage,
+} from 'electron'
 import path from 'path'
 import { SERVICES, Service } from '../services'
 import { showMainWindow } from '../windows/settings'
@@ -40,32 +46,45 @@ function createTrayIcon(): Tray {
   return tray
 }
 
-function buildServiceMenuItems(service: Service): MenuItemConstructorOptions[] {
-  const label = SERVICE_LABELS[service.name] || service.name
-  const isRunning = service.isRunning()
-  const timeUntilNext = formatTimeUntilNextRun(service.getTimeUntilNextRun())
-
-  return [
-    {
-      label,
-      enabled: false,
-    },
-    {
-      label: isRunning ? `  Next: ${timeUntilNext}` : '  Not running',
-      enabled: false,
-    },
-    {
-      label: '  Run Now',
-      click: () => {
-        service.runNow()
-      },
-    },
-  ]
-}
-
 function updateTrayMenu(): void {
   if (!tray) {
     return
+  }
+
+  function buildServiceMenuItems(
+    service: Service,
+  ): MenuItemConstructorOptions[] {
+    const label = SERVICE_LABELS[service.name] || service.name
+    const isEnabled = service.isEnabled()
+
+    if (!isEnabled) {
+      return [
+        {
+          label: `${label} (disabled)`,
+          enabled: false,
+        },
+      ]
+    }
+
+    const isRunning = service.isRunning()
+    const timeUntilNext = formatTimeUntilNextRun(service.getTimeUntilNextRun())
+
+    return [
+      {
+        label,
+        enabled: false,
+      },
+      {
+        label: isRunning ? `  Next: ${timeUntilNext}` : '  Not running',
+        enabled: false,
+      },
+      {
+        label: '  Run Now',
+        click: () => {
+          service.runNow()
+        },
+      },
+    ]
   }
 
   const serviceMenuItems: MenuItemConstructorOptions[] = []

@@ -88,6 +88,11 @@ function isRunning(): boolean {
 }
 
 async function runNow(): Promise<void> {
+  const config = store.get('contactsSync')
+  if (!config.enabled) {
+    throw new Error('Contacts sync is disabled')
+  }
+
   try {
     await syncAndUpload()
   } catch (error) {
@@ -106,12 +111,17 @@ function getTimeUntilNextRun(): number {
   return Math.max(0, nextSyncTime.getTime() - Date.now())
 }
 
+function isEnabled(): boolean {
+  return store.get('contactsSync').enabled
+}
+
 export const contactsService: Service = {
   name: 'contacts',
   start,
   stop,
   restart,
   isRunning,
+  isEnabled,
   runNow,
   getNextRunTime,
   getTimeUntilNextRun,
