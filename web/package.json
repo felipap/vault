@@ -1,6 +1,6 @@
 {
   "name": "web",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "private": true,
   "packageManager": "npm",
   "scripts": {
@@ -20,7 +20,6 @@
     "postgres": "^3.4.7",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "sharp": "^0.34.5",
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {

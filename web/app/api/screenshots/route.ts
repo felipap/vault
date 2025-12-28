@@ -3,7 +3,7 @@ import { db } from "@/db"
 import { Screenshots } from "@/db/schema"
 import { config } from "@/lib/config"
 import { logWrite } from "@/lib/activity-log"
-import { SCREENSHOT_ENCRYPTABLE_COLUMNS } from "@/lib/encryption-schema"
+import { SCREENSHOT_ENCRYPTED_COLUMNS } from "@/lib/encryption-schema"
 
 // Check if buffer starts with our encryption magic bytes "CTXE"
 function isEncryptedBuffer(buffer: Buffer): boolean {
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
     metadata: {
       sizeBytes,
       encrypted: true,
-      encryptedColumns: SCREENSHOT_ENCRYPTABLE_COLUMNS,
+      encryptedColumns: SCREENSHOT_ENCRYPTED_COLUMNS,
     },
   })
 

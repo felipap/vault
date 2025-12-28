@@ -2,8 +2,8 @@ import { db } from "@/db"
 import { DEFAULT_USER_ID, iMessageAttachments, iMessages } from "@/db/schema"
 import { logRead, logWrite } from "@/lib/activity-log"
 import {
-  ATTACHMENT_ENCRYPTABLE_COLUMNS,
-  IMESSAGE_ENCRYPTABLE_COLUMNS,
+  ATTACHMENT_ENCRYPTED_COLUMNS,
+  IMESSAGE_ENCRYPTED_COLUMNS,
 } from "@/lib/encryption-schema"
 import { and, eq, gte, sql } from "drizzle-orm"
 import { NextRequest } from "next/server"
@@ -11,9 +11,59 @@ import { z } from "zod"
 
 const ENCRYPTED_PREFIX = "enc:v1:"
 
-function isEncryptedText(text: string | null): boolean {
-  return text !== null && text.startsWith(ENCRYPTED_PREFIX)
+function isEncrypted(text: string): boolean {
+  return text.startsWith(ENCRYPTED_PREFIX)
 }
+
+const encryptedOrEmpty = z.string().refine((s) => s === "" || isEncrypted(s), {
+  message: "must be encrypted (missing enc:v1: prefix)",
+})
+
+const contactFormat = z.string().refine(
+  (contact) =>
+    contact.includes("@") || // email
+    /^\+\d+$/.test(contact) || // standardized phone
+    /^\d+$/.test(contact) || // short code
+    contact.startsWith("urn:") || // business URN
+    contact.toLowerCase() === "unknown", // unknown sender
+  {
+    message:
+      'Invalid contact format. Expected: phone (+1234...), email, short code, URN, or "Unknown"',
+  }
+)
+
+const AttachmentSchema = z.object({
+  // Required - validated in original code
+  id: z.string(),
+  filename: z.string(),
+  mimeType: z.string(),
+  // Optional - not validated in original, but used in insert
+  path: z.string().optional(),
+  size: z.number().optional(),
+  isImage: z.boolean().optional(),
+  createdAt: z.string().optional(),
+  dataBase64: encryptedOrEmpty.optional(),
+})
+
+const MessageSchema = z.object({
+  id: z.union([z.number(), z.string()]),
+  guid: z.string(),
+  text: encryptedOrEmpty.nullable(),
+  contact: contactFormat,
+  subject: encryptedOrEmpty.nullable(),
+  date: z.string().nullable(),
+  isFromMe: z.boolean(),
+  isRead: z.boolean(),
+  isSent: z.boolean(),
+  isDelivered: z.boolean(),
+  hasAttachments: z.boolean(),
+  service: z.string(),
+  chatId: z.string().nullable().optional(),
+  chatName: z.string().nullable().optional(),
+  attachments: z.array(AttachmentSchema).optional(),
+})
+
+type ValidatedMessage = z.infer<typeof MessageSchema>
 
 const MAX_LIMIT = 50
 
@@ -168,7 +218,7 @@ export async function POST(request: NextRequest) {
         skippedCount,
         rejectedCount: rejectedMessages.length,
         encrypted: true,
-        encryptedColumns: IMESSAGE_ENCRYPTABLE_COLUMNS,
+        encryptedColumns: IMESSAGE_ENCRYPTED_COLUMNS,
       },
     })
   }
@@ -180,7 +230,7 @@ export async function POST(request: NextRequest) {
       count: insertedAttachments.length,
       metadata: {
         encrypted: true,
-        encryptedColumns: ATTACHMENT_ENCRYPTABLE_COLUMNS,
+        encryptedColumns: ATTACHMENT_ENCRYPTED_COLUMNS,
       },
     })
   }
@@ -197,201 +247,13 @@ export async function POST(request: NextRequest) {
   })
 }
 
-interface Attachment {
-  id: string
-  filename: string
-  mimeType: string
-  path: string
-  size: number
-  isImage: boolean
-  createdAt: string
-  dataBase64?: string
-}
-
-interface FormattediMessage {
-  id: number | string // Accept both for compatibility
-  guid: string
-  text: string | null
-  contact: string
-  subject: string | null
-  date: string | null
-  isFromMe: boolean
-  isRead: boolean
-  isSent: boolean
-  isDelivered: boolean
-  hasAttachments: boolean
-  attachments?: Attachment[]
-  service: string
-  chatId?: string | null
-  chatName?: string | null
-}
-
-function validateMessage(
-  msg: unknown
-):
-  | { success: true; data: FormattediMessage }
-  | { success: false; error: string } {
-  if (typeof msg !== "object" || msg === null) {
-    return { success: false, error: "Message must be an object" }
-  }
-
-  const m = msg as Record<string, unknown>
-
-  // Accept both number and string IDs (iMessage Kit SDK uses strings)
-  if (typeof m.id !== "number" && typeof m.id !== "string") {
-    return { success: false, error: "id must be a number or string" }
-  }
-  if (typeof m.guid !== "string") {
-    return { success: false, error: "guid must be a string" }
-  }
-  if (m.text !== null && typeof m.text !== "string") {
-    return { success: false, error: "text must be a string or null" }
-  }
-  if (m.text !== null && m.text !== "" && !isEncryptedText(m.text as string)) {
-    return {
-      success: false,
-      error: "text must be encrypted (missing enc:v1: prefix)",
-    }
-  }
-  if (typeof m.contact !== "string") {
-    return { success: false, error: "contact must be a string" }
-  }
-  // Validate contact format - allow:
-  // - Standardized phone numbers (+1234567890)
-  // - Email addresses (contain @)
-  // - Short codes (digits only, like "692632")
-  // - Business URNs (urn:biz:...)
-  // - "Unknown" or "unknown"
-  const contact = m.contact
-  const isValidContact =
-    contact.includes("@") || // email
-    /^\+\d+$/.test(contact) || // standardized phone
-    /^\d+$/.test(contact) || // short code
-    contact.startsWith("urn:") || // business URN
-    contact.toLowerCase() === "unknown" // unknown sender
-
-  if (!isValidContact) {
-    return {
-      success: false,
-      error:
-        'Invalid contact format. Expected: phone (+1234...), email, short code, URN, or "Unknown"',
-    }
-  }
-  if (m.subject !== null && typeof m.subject !== "string") {
-    return { success: false, error: "subject must be a string or null" }
-  }
-  if (
-    m.subject !== null &&
-    m.subject !== "" &&
-    !isEncryptedText(m.subject as string)
-  ) {
-    return {
-      success: false,
-      error: "subject must be encrypted (missing enc:v1: prefix)",
-    }
-  }
-  if (m.date !== null && typeof m.date !== "string") {
-    return { success: false, error: "date must be a string or null" }
-  }
-  if (typeof m.isFromMe !== "boolean") {
-    return { success: false, error: "isFromMe must be a boolean" }
-  }
-  if (typeof m.isRead !== "boolean") {
-    return { success: false, error: "isRead must be a boolean" }
-  }
-  if (typeof m.isSent !== "boolean") {
-    return { success: false, error: "isSent must be a boolean" }
-  }
-  if (typeof m.isDelivered !== "boolean") {
-    return { success: false, error: "isDelivered must be a boolean" }
-  }
-  if (typeof m.hasAttachments !== "boolean") {
-    return { success: false, error: "hasAttachments must be a boolean" }
-  }
-  if (typeof m.service !== "string") {
-    return { success: false, error: "service must be a string" }
-  }
-  if (
-    m.chatId !== undefined &&
-    m.chatId !== null &&
-    typeof m.chatId !== "string"
-  ) {
-    return {
-      success: false,
-      error: "chatId must be a string, null, or undefined",
-    }
-  }
-  if (
-    m.chatName !== undefined &&
-    m.chatName !== null &&
-    typeof m.chatName !== "string"
-  ) {
-    return {
-      success: false,
-      error: "chatName must be a string, null, or undefined",
-    }
-  }
-
-  // Validate attachments if present
-  if (m.attachments !== undefined) {
-    if (!Array.isArray(m.attachments)) {
-      return { success: false, error: "attachments must be an array" }
-    }
-    for (const att of m.attachments) {
-      if (typeof att !== "object" || att === null) {
-        return { success: false, error: "each attachment must be an object" }
-      }
-      const a = att as Record<string, unknown>
-      if (typeof a.id !== "string") {
-        return { success: false, error: "attachment.id must be a string" }
-      }
-      if (typeof a.filename !== "string") {
-        return { success: false, error: "attachment.filename must be a string" }
-      }
-      if (typeof a.mimeType !== "string") {
-        return { success: false, error: "attachment.mimeType must be a string" }
-      }
-      if (a.dataBase64 !== undefined && typeof a.dataBase64 !== "string") {
-        return {
-          success: false,
-          error: "attachment.dataBase64 must be a string if present",
-        }
-      }
-      if (
-        a.dataBase64 !== undefined &&
-        typeof a.dataBase64 === "string" &&
-        a.dataBase64 !== "" &&
-        !isEncryptedText(a.dataBase64 as string)
-      ) {
-        return {
-          success: false,
-          error:
-            "attachment.dataBase64 must be encrypted (missing enc:v1: prefix)",
-        }
-      }
-    }
-  }
-
-  return {
-    success: true,
-    data: {
-      id: typeof m.id === "string" ? parseInt(m.id, 10) || 0 : m.id,
-      guid: m.guid,
-      text: m.text as string | null,
-      contact: m.contact,
-      subject: m.subject as string | null,
-      date: m.date as string | null,
-      isFromMe: m.isFromMe,
-      isRead: m.isRead,
-      isSent: m.isSent,
-      isDelivered: m.isDelivered,
-      hasAttachments: m.hasAttachments,
-      service: m.service,
-      chatId: m.chatId as string | null | undefined,
-      chatName: m.chatName as string | null | undefined,
-      attachments: m.attachments as Attachment[] | undefined,
-    },
-  }
+function formatZodError(error: z.ZodError): string {
+  return error.issues
+    .map((issue) => {
+      const path = issue.path.length > 0 ? `${issue.path.join(".")}: ` : ""
+      return `${path}${issue.message}`
+    })
+    .join("; ")
 }
 
 function truncateForLog(obj: unknown): unknown {
@@ -413,7 +275,7 @@ function truncateForLog(obj: unknown): unknown {
 }
 
 function validateMessages(messages: unknown[]) {
-  const validMessages: FormattediMessage[] = []
+  const validMessages: ValidatedMessage[] = []
   const rejectedMessages: Array<{
     index: number
     message: unknown
@@ -421,35 +283,28 @@ function validateMessages(messages: unknown[]) {
   }> = []
 
   for (let i = 0; i < messages.length; i++) {
-    const message = messages[i] as unknown
-    const validationResult = validateMessage(message)
+    const message = messages[i]
+    const result = MessageSchema.safeParse(message)
 
-    if (!validationResult.success) {
-      rejectedMessages.push({
-        index: i,
-        message,
-        error: validationResult.error,
-      })
-      // Truncate message for logging (remove large base64 data)
+    if (!result.success) {
+      const error = formatZodError(result.error)
+      rejectedMessages.push({ index: i, message, error })
       const truncatedMessage = truncateForLog(message)
       console.warn(
         `Rejected message at index ${i}:`,
-        JSON.stringify({
-          message: truncatedMessage,
-          error: validationResult.error,
-        })
+        JSON.stringify({ message: truncatedMessage, error })
       )
       continue
     }
 
-    validMessages.push(validationResult.data)
+    validMessages.push(result.data)
   }
 
   return { validMessages, rejectedMessages }
 }
 
 function toMessageValues(
-  validMessage: FormattediMessage,
+  validMessage: ValidatedMessage,
   deviceId: string,
   syncTime: string
 ) {
@@ -478,7 +333,7 @@ function toMessageValues(
 }
 
 async function insertMessagesInBatches(
-  validMessages: FormattediMessage[],
+  validMessages: ValidatedMessage[],
   deviceId: string,
   syncTime: string
 ) {
@@ -488,8 +343,8 @@ async function insertMessagesInBatches(
   upsertCutoff.setDate(upsertCutoff.getDate() - UPSERT_DAYS)
 
   // Split messages into recent (upsert) and older (insert only)
-  const recentMessages: FormattediMessage[] = []
-  const olderMessages: FormattediMessage[] = []
+  const recentMessages: ValidatedMessage[] = []
+  const olderMessages: ValidatedMessage[] = []
 
   for (const msg of validMessages) {
     const msgDate = msg.date ? new Date(msg.date) : null
@@ -564,7 +419,7 @@ async function insertMessagesInBatches(
 }
 
 async function insertAttachments(
-  validMessages: FormattediMessage[],
+  validMessages: ValidatedMessage[],
   insertedMessages: Array<{ id: string; guid: string }>,
   deviceId: string,
   syncTime: string
