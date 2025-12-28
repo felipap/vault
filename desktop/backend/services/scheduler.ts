@@ -1,7 +1,14 @@
-import { store } from '../store'
+import { getEncryptionKey, store } from '../store'
 import type { SyncStatus, Service } from './index'
 
 type ConfigKey = 'screenCapture' | 'imessageExport' | 'contactsSync'
+
+class MissingEncryptionKeyError extends Error {
+  constructor() {
+    super('Encryption key is required but not set')
+    this.name = 'MissingEncryptionKeyError'
+  }
+}
 
 type SchedulerOptions = {
   name: string
@@ -19,6 +26,14 @@ export function createScheduledService(options: SchedulerOptions): Service {
   let lastSyncStatus: SyncStatus = null
 
   async function runSync(): Promise<void> {
+    // Check for encryption key before syncing
+    const encryptionKey = getEncryptionKey()
+    if (!encryptionKey) {
+      console.log(`[${name}] Skipping sync: encryption key not set`)
+      lastSyncStatus = 'error'
+      return
+    }
+
     try {
       await onSync()
       lastSyncStatus = 'success'
@@ -123,6 +138,11 @@ export function createScheduledService(options: SchedulerOptions): Service {
     const config = store.get(configKey)
     if (!config.enabled) {
       throw new Error(`${name} is disabled`)
+    }
+
+    const encryptionKey = getEncryptionKey()
+    if (!encryptionKey) {
+      throw new MissingEncryptionKeyError()
     }
 
     await runSync()

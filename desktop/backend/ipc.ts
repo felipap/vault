@@ -11,6 +11,8 @@ import {
   getDeviceId,
   getDeviceSecret,
   setDeviceSecret,
+  getEncryptionKey,
+  setEncryptionKey,
 } from './store'
 
 export function registerIpcHandlers(): void {
@@ -53,6 +55,14 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('set-device-secret', (_event, secret: string) => {
     setDeviceSecret(secret)
+  })
+
+  ipcMain.handle('get-encryption-key', () => {
+    return getEncryptionKey()
+  })
+
+  ipcMain.handle('set-encryption-key', (_event, key: string) => {
+    setEncryptionKey(key)
   })
 
   ipcMain.handle('get-imessage-export-config', () => {

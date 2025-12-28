@@ -41,6 +41,23 @@ export function setDeviceSecret(secret: string): void {
   store.set('deviceSecret', encrypted)
 }
 
+export function getEncryptionKey(): string | null {
+  const stored = store.get('encryptionKey')
+  if (!stored) {
+    return null
+  }
+  return decryptSecret(stored)
+}
+
+export function setEncryptionKey(key: string): void {
+  if (!key) {
+    store.set('encryptionKey', null)
+    return
+  }
+  const encrypted = encryptSecret(key)
+  store.set('encryptionKey', encrypted)
+}
+
 export function getDeviceId(): string {
   const id = store.get('deviceId')
   if (!id) {

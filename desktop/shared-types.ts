@@ -41,6 +41,8 @@ export interface ElectronAPI {
   getDeviceId: () => Promise<string>
   getDeviceSecret: () => Promise<string | null>
   setDeviceSecret: (secret: string) => Promise<void>
+  getEncryptionKey: () => Promise<string | null>
+  setEncryptionKey: (key: string) => Promise<void>
 
   // Screenshots service
   getScreenCaptureConfig: () => Promise<ServiceConfig>

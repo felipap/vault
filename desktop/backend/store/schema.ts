@@ -14,6 +14,7 @@ export type ApiRequestLog = {
 export type StoreSchema = {
   deviceId: string | null
   deviceSecret: string | null
+  encryptionKey: string | null
   serverUrl: string | null
   screenCapture: {
     enabled: boolean
@@ -37,6 +38,7 @@ export type StoreSchema = {
 export const DEFAULT_STATE: StoreSchema = {
   deviceId: randomUUID(),
   deviceSecret: null,
+  encryptionKey: null,
   serverUrl: null,
   screenCapture: {
     enabled: false,

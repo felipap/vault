@@ -1,19 +1,65 @@
 import { useState, useEffect } from 'react'
 import { SERVICES, ServiceSection } from './services/ServiceSection'
+import { EyeIcon, EyeOffIcon } from '../../shared/ui/icons'
+
+type PasswordInputProps = {
+  value: string
+  onChange: (value: string) => void
+  onBlur: () => void
+  placeholder: string
+  hasError?: boolean
+}
+
+function PasswordInput({
+  value,
+  onChange,
+  onBlur,
+  placeholder,
+  hasError,
+}: PasswordInputProps) {
+  const [showPassword, setShowPassword] = useState(false)
+
+  return (
+    <div className="relative">
+      <input
+        type={showPassword ? 'text' : 'password'}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={onBlur}
+        className={`w-full px-3 py-2 pr-10 rounded-md border bg-[var(--background-color-three)] focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+          hasError ? 'border-red-500' : ''
+        }`}
+        placeholder={placeholder}
+      />
+      <button
+        type="button"
+        onClick={() => setShowPassword(!showPassword)}
+        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-[var(--text-color-secondary)] hover:text-[var(--text-color-primary)] transition-colors"
+      >
+        {showPassword ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}
+      </button>
+    </div>
+  )
+}
 
 export function MainTab() {
   const [serverUrl, setServerUrl] = useState('')
   const [deviceSecret, setDeviceSecret] = useState('')
+  const [encryptionKey, setEncryptionKey] = useState('')
   const [isLoading, setIsLoading] = useState(true)
+
+  const hasEncryptionKey = encryptionKey.length > 0
 
   useEffect(() => {
     async function load() {
-      const [url, secret] = await Promise.all([
+      const [url, secret, key] = await Promise.all([
         window.electron.getServerUrl(),
         window.electron.getDeviceSecret(),
+        window.electron.getEncryptionKey(),
       ])
       setServerUrl(url ?? '')
       setDeviceSecret(secret ?? '')
+      setEncryptionKey(key ?? '')
       setIsLoading(false)
     }
     load()
@@ -25,6 +71,10 @@ export function MainTab() {
 
   const handleDeviceSecretBlur = async () => {
     await window.electron.setDeviceSecret(deviceSecret)
+  }
+
+  const handleEncryptionKeyBlur = async () => {
+    await window.electron.setEncryptionKey(encryptionKey)
   }
 
   if (isLoading) {
@@ -57,18 +107,33 @@ export function MainTab() {
 
           <div>
             <label className="block text-sm font-medium mb-1.5">
-              Device Secret
+              API Write Secret
             </label>
-            <input
-              type="password"
+            <PasswordInput
               value={deviceSecret}
-              onChange={(e) => setDeviceSecret(e.target.value)}
+              onChange={setDeviceSecret}
               onBlur={handleDeviceSecretBlur}
-              className="w-full px-3 py-2 rounded-md border bg-[var(--background-color-three)] focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter the secret from your server"
             />
             <p className="text-xs text-[var(--text-color-secondary)] mt-1">
               Must match API_WRITE_SECRET on the server
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1.5">
+              Encryption Key (E2E) <span className="text-red-500">*</span>
+            </label>
+            <PasswordInput
+              value={encryptionKey}
+              onChange={setEncryptionKey}
+              onBlur={handleEncryptionKeyBlur}
+              placeholder="Required: passphrase for E2E encryption"
+              hasError={!hasEncryptionKey}
+            />
+            <p className="text-xs text-[var(--text-color-secondary)] mt-1">
+              All data is encrypted before upload. Use the same key on the
+              dashboard to decrypt.
             </p>
           </div>
         </div>
@@ -76,7 +141,18 @@ export function MainTab() {
 
       <div>
         <h2 className="text-lg font-semibold mb-4">Data Sources</h2>
-        <div className="space-y-2">
+
+        {!hasEncryptionKey && (
+          <div className="mb-4 rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-4 py-3">
+            <p className="text-sm text-amber-800 dark:text-amber-200">
+              Set an encryption key above to enable data syncing.
+            </p>
+          </div>
+        )}
+
+        <div
+          className={`space-y-2 ${!hasEncryptionKey ? 'opacity-50 pointer-events-none' : ''}`}
+        >
           {SERVICES.map((service) => (
             <ServiceSection key={service.name} service={service} />
           ))}

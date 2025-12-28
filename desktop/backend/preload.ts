@@ -15,6 +15,9 @@ const api = {
   getDeviceSecret: () => ipcRenderer.invoke('get-device-secret'),
   setDeviceSecret: (secret: string) =>
     ipcRenderer.invoke('set-device-secret', secret),
+  getEncryptionKey: () => ipcRenderer.invoke('get-encryption-key'),
+  setEncryptionKey: (key: string) =>
+    ipcRenderer.invoke('set-encryption-key', key),
 
   // Screenshots service
   getScreenCaptureConfig: () => ipcRenderer.invoke('get-screen-capture-config'),

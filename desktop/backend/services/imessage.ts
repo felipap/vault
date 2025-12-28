@@ -1,14 +1,22 @@
 import { IMessageSDK } from '@photon-ai/imessage-kit'
 import { apiRequest } from '../lib/contexter-api'
+import { encryptText } from '../lib/encryption'
 import { catchAndComplain } from '../lib/utils'
 import {
   createIMessageSDK,
   fetchMessages,
   type Message,
 } from '../sources/imessage'
-import { getDeviceId, store } from '../store'
+import { getDeviceId, getEncryptionKey, store } from '../store'
 import { startAnimating } from '../tray/animate'
 import { createScheduledService } from './scheduler'
+
+function encryptMessages(messages: Message[], encryptionKey: string): Message[] {
+  return messages.map((msg) => ({
+    ...msg,
+    text: msg.text ? encryptText(msg.text, encryptionKey) : msg.text,
+  }))
+}
 
 async function uploadMessages(
   messages: Message[],
@@ -17,10 +25,16 @@ async function uploadMessages(
     return {}
   }
 
+  // Encrypt message text if encryption key is set
+  const encryptionKey = getEncryptionKey()
+  const messagesToUpload = encryptionKey
+    ? encryptMessages(messages, encryptionKey)
+    : messages
+
   const res = await apiRequest({
     path: '/api/imessages',
     body: {
-      messages,
+      messages: messagesToUpload,
       syncTime: new Date().toISOString(),
       deviceId: getDeviceId(),
       messageCount: messages.length,
