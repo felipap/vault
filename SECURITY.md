@@ -32,6 +32,18 @@ If `API_WRITE_SECRET` is unset on the server, device auth is bypassed (for devel
 
 API read is actually more sensitive than write.
 
+## End-to-End Encryption (E2EE)
+
+Messages and screenshots are encrypted on the desktop before upload. The encryption key **never leaves your browser**.
+
+- Desktop app encrypts data locally before sending to the server
+- Server stores encrypted blobs (it cannot read your data)
+- Web dashboard downloads encrypted data and decrypts it locally
+- The encryption key is stored in browser `sessionStorage` (must not be sent anywhere)
+- Decryption uses the Web Crypto API (`crypto.subtle`) in your browser
+
+The server has no way to decrypt your data. If you lose your encryption key, your data is unrecoverable.
+
 ## Rate Limiting
 
 Configure rate limiting in the Vercel dashboard under **Firewall → + New Rule**.
