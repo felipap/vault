@@ -81,12 +81,31 @@ function EncryptionKeyButton() {
   const [keyInput, setKeyInput] = useState("")
   const [hasKey, setHasKey] = useState(false)
   const [expiryTime, setExpiryTime] = useState<Date | null>(null)
+  const [, setTick] = useState(0)
 
   useEffect(() => {
     const key = getEncryptionKey()
     setHasKey(!!key)
     setExpiryTime(getEncryptionKeyExpiry())
   }, [])
+
+  // Update every minute to keep the countdown fresh
+  useEffect(() => {
+    if (!hasKey || !expiryTime) {
+      return
+    }
+    const interval = setInterval(() => {
+      setTick((t) => t + 1)
+      // Check if expired
+      if (expiryTime.getTime() <= Date.now()) {
+        clearEncryptionKey()
+        setHasKey(false)
+        setExpiryTime(null)
+        window.location.reload()
+      }
+    }, 30000) // Update every 30 seconds
+    return () => clearInterval(interval)
+  }, [hasKey, expiryTime])
 
   const handleSetKey = () => {
     if (keyInput.trim()) {
@@ -107,19 +126,43 @@ function EncryptionKeyButton() {
     window.location.reload()
   }
 
+  const getMinutesRemaining = (date: Date | null) => {
+    if (!date) {
+      return null
+    }
+    const diff = date.getTime() - Date.now()
+    if (diff <= 0) {
+      return 0
+    }
+    return Math.floor(diff / 60000)
+  }
+
   const formatExpiry = (date: Date | null) => {
     if (!date) {
       return ""
     }
-    const diff = date.getTime() - Date.now()
-    if (diff <= 0) {
+    const mins = getMinutesRemaining(date)
+    if (mins === null || mins <= 0) {
       return "Expired"
     }
-    const mins = Math.floor(diff / 60000)
     if (mins < 60) {
       return `Clearing in ${mins}m`
     }
     return `Clearing in ${Math.floor(mins / 60)}h ${mins % 60}m`
+  }
+
+  const minutesRemaining = getMinutesRemaining(expiryTime)
+  const showCountdown =
+    hasKey && minutesRemaining !== null && minutesRemaining <= 10
+
+  const getButtonLabel = () => {
+    if (!hasKey) {
+      return "Encrypted"
+    }
+    if (showCountdown) {
+      return `${minutesRemaining}m left`
+    }
+    return "Decrypting"
   }
 
   return (
@@ -129,7 +172,9 @@ function EncryptionKeyButton() {
         className={twMerge(
           "flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm transition-colors",
           hasKey
-            ? "border-green-200 bg-green-50 text-green-700 hover:bg-green-100 dark:border-green-800 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50"
+            ? showCountdown
+              ? "border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50"
+              : "border-green-200 bg-green-50 text-green-700 hover:bg-green-100 dark:border-green-800 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50"
             : "border-zinc-200 text-zinc-500 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800"
         )}
         title={
@@ -139,9 +184,7 @@ function EncryptionKeyButton() {
         }
       >
         {hasKey ? <UnlockIcon /> : <LockIcon />}
-        <span className="hidden sm:inline">
-          {hasKey ? "Decrypting" : "Encrypted"}
-        </span>
+        <span className="hidden sm:inline">{getButtonLabel()}</span>
       </button>
 
       {isOpen && (
