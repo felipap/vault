@@ -1,28 +1,84 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { getLocations, type Location } from "./actions"
 import { Pagination } from "@/ui/Pagination"
-import { MapPinIcon } from "@/ui/icons"
+import { MapPinIcon, LockIcon } from "@/ui/icons"
+import { decryptText, isEncrypted, getEncryptionKey } from "@/lib/encryption"
+
+export type DecryptedLocation = Location & {
+  decryptedLatitude: string | null
+  decryptedLongitude: string | null
+  isLocationEncrypted: boolean
+}
 
 export default function Page() {
-  const [locations, setLocations] = useState<Location[]>([])
+  const [locations, setLocations] = useState<DecryptedLocation[]>([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [total, setTotal] = useState(0)
 
+  const decryptLocations = useCallback(
+    async (locs: Location[]): Promise<DecryptedLocation[]> => {
+      const encryptionKey = getEncryptionKey()
+      return Promise.all(
+        locs.map(async (loc) => {
+          const latEncrypted = isEncrypted(loc.latitude)
+          const lonEncrypted = isEncrypted(loc.longitude)
+          const isLocationEncrypted = latEncrypted || lonEncrypted
+
+          if (!isLocationEncrypted) {
+            return {
+              ...loc,
+              decryptedLatitude: loc.latitude,
+              decryptedLongitude: loc.longitude,
+              isLocationEncrypted: false,
+            }
+          }
+
+          if (!encryptionKey) {
+            return {
+              ...loc,
+              decryptedLatitude: null,
+              decryptedLongitude: null,
+              isLocationEncrypted: true,
+            }
+          }
+
+          const [decryptedLat, decryptedLon] = await Promise.all([
+            latEncrypted
+              ? decryptText(loc.latitude, encryptionKey)
+              : loc.latitude,
+            lonEncrypted
+              ? decryptText(loc.longitude, encryptionKey)
+              : loc.longitude,
+          ])
+
+          return {
+            ...loc,
+            decryptedLatitude: decryptedLat,
+            decryptedLongitude: decryptedLon,
+            isLocationEncrypted: true,
+          }
+        })
+      )
+    },
+    []
+  )
+
   useEffect(() => {
     async function load() {
       setLoading(true)
       const data = await getLocations(page)
-      setLocations(data.locations)
+      const decrypted = await decryptLocations(data.locations)
+      setLocations(decrypted)
       setTotalPages(data.totalPages)
       setTotal(data.total)
       setLoading(false)
     }
     load()
-  }, [page])
+  }, [page, decryptLocations])
 
   let inner
   if (loading) {
@@ -70,8 +126,12 @@ export default function Page() {
   )
 }
 
-function LocationRow({ location }: { location: Location }) {
-  const mapsUrl = `https://www.google.com/maps?q=${location.latitude},${location.longitude}`
+function LocationRow({ location }: { location: DecryptedLocation }) {
+  const hasCoordinates =
+    location.decryptedLatitude !== null && location.decryptedLongitude !== null
+  const mapsUrl = hasCoordinates
+    ? `https://www.google.com/maps?q=${location.decryptedLatitude},${location.decryptedLongitude}`
+    : null
 
   return (
     <tr className="bg-white transition-colors hover:bg-zinc-50 dark:bg-zinc-950 dark:hover:bg-zinc-900">
@@ -79,10 +139,26 @@ function LocationRow({ location }: { location: Location }) {
         <span className="text-zinc-900 dark:text-zinc-100">
           {formatDate(location.timestamp)}
         </span>
-        <span className="ml-2 text-zinc-500">{formatTime(location.timestamp)}</span>
+        <span className="ml-2 text-zinc-500">
+          {formatTime(location.timestamp)}
+        </span>
       </td>
       <td className="px-4 py-3 font-mono text-xs text-zinc-600 dark:text-zinc-400">
-        {location.latitude}, {location.longitude}
+        {hasCoordinates ? (
+          <span className="flex items-center gap-1.5">
+            {location.isLocationEncrypted && (
+              <span className="text-green-500" title="Decrypted">
+                <LockIcon size={12} />
+              </span>
+            )}
+            {location.decryptedLatitude}, {location.decryptedLongitude}
+          </span>
+        ) : (
+          <span className="flex items-center gap-1.5 italic text-amber-500">
+            <LockIcon size={12} />
+            Encrypted - enter key to decrypt
+          </span>
+        )}
       </td>
       <td className="px-4 py-3">
         {location.accuracy !== null ? (
@@ -99,15 +175,19 @@ function LocationRow({ location }: { location: Location }) {
         </span>
       </td>
       <td className="px-4 py-3">
-        <a
-          href={mapsUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-        >
-          <MapPinIcon className="h-3.5 w-3.5" />
-          View
-        </a>
+        {mapsUrl ? (
+          <a
+            href={mapsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+          >
+            <MapPinIcon className="h-3.5 w-3.5" />
+            View
+          </a>
+        ) : (
+          <span className="text-zinc-400">—</span>
+        )}
       </td>
     </tr>
   )

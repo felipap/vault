@@ -14,3 +14,5 @@ export const CONTACT_ENCRYPTED_COLUMNS = [
   "emails",
   "phoneNumbers",
 ] as const
+
+export const LOCATION_ENCRYPTED_COLUMNS = ["latitude", "longitude"] as const
