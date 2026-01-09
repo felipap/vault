@@ -1,0 +1,17 @@
+@readSecret = {{$dotenv API_READ_SECRET}}
+@host = http://localhost:3000
+
+###
+
+GET {{host}}/api/locations/latest
+Authorization: Bearer {{readSecret}}
+
+###
+
+GET {{host}}/api/locations/latest?within_min=50000
+Authorization: Bearer {{readSecret}}
+
+###
+
+GET {{host}}/api/locations/latest?within_min=60
+Authorization: Bearer {{readSecret}}

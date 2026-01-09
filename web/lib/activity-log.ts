@@ -7,6 +7,7 @@ export type ReadLogType =
   | "imessage"
   | "chat"
   | "contact"
+  | "location"
   | "stats"
 
 type LogWriteParams = {
