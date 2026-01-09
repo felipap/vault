@@ -66,7 +66,7 @@ export function DashboardClient() {
     <div className="space-y-8">
       <div>
         <h2 className="mb-4 text-lg font-semibold">Overview</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <StatCard
             label="Total Screenshots"
             value={stats.totalScreenshots.toLocaleString()}
@@ -91,6 +91,11 @@ export function DashboardClient() {
             label="Total Contacts"
             value={stats.totalContacts.toLocaleString()}
             href="/dashboard/contacts"
+          />
+          <StatCard
+            label="Total Locations"
+            value={stats.totalLocations.toLocaleString()}
+            href="/dashboard/locations"
           />
         </div>
       </div>

@@ -18,6 +18,7 @@ const NAV_ITEMS = [
   { href: "/dashboard/screenshots", label: "Screenshots" },
   { href: "/dashboard/messages", label: "Messages" },
   { href: "/dashboard/contacts", label: "Contacts" },
+  { href: "/dashboard/locations", label: "Locations" },
 ]
 
 export function DashboardNav() {

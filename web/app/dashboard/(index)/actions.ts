@@ -1,7 +1,7 @@
 "use server"
 
 import { db } from "@/db"
-import { DEFAULT_USER_ID, iMessages, Screenshots } from "@/db/schema"
+import { DEFAULT_USER_ID, iMessages, Locations, Screenshots } from "@/db/schema"
 import { isAuthenticated } from "@/lib/admin-auth"
 import { eq, sql } from "drizzle-orm"
 import { unauthorized } from "next/navigation"
@@ -12,6 +12,7 @@ export type DashboardStats = {
   totalMessages: number
   totalChats: number
   totalContacts: number
+  totalLocations: number
 }
 
 export async function getDashboardStats(): Promise<DashboardStats> {
@@ -45,11 +46,18 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     WHERE user_id = ${DEFAULT_USER_ID}
   `)
 
+  const [locationStats] = await db
+    .select({
+      count: sql<number>`count(*)::int`,
+    })
+    .from(Locations)
+
   return {
     totalScreenshots: screenshotStats.count,
     totalStorageBytes: screenshotStats.totalBytes,
     totalMessages: messageStats.count,
     totalChats: chatStats.count,
     totalContacts: contactStats.count,
+    totalLocations: locationStats.count,
   }
 }
