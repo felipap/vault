@@ -2,11 +2,14 @@ import {
   app,
   Menu,
   MenuItemConstructorOptions,
+  shell,
   Tray,
   nativeImage,
 } from 'electron'
 import path from 'path'
 import { SERVICES, Service } from '../services'
+import { getEncryptionKey } from '../store'
+import { store } from '../store'
 import { showMainWindow } from '../windows/settings'
 
 let tray: Tray | null = null
@@ -116,9 +119,24 @@ function updateTrayMenu(): void {
     serviceMenuItems.push(...buildServiceMenuItems(service))
   }
 
+  const serverUrl = store.get('serverUrl')
+  const encryptionKey = getEncryptionKey()
+  const canOpenDashboard = Boolean(serverUrl && encryptionKey)
+
   const contextMenu = Menu.buildFromTemplate([
     ...serviceMenuItems,
     { type: 'separator' },
+    {
+      label: 'Open Dashboard',
+      enabled: canOpenDashboard,
+      click: () => {
+        if (serverUrl && encryptionKey) {
+          const url = new URL('/dashboard', serverUrl)
+          url.searchParams.set('key', encryptionKey)
+          shell.openExternal(url.toString())
+        }
+      },
+    },
     {
       label: 'Settings',
       accelerator: 'CmdOrCtrl+,',

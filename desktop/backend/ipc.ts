@@ -91,6 +91,28 @@ export function registerIpcHandlers(): void {
     },
   )
 
+  ipcMain.handle('get-unipile-whatsapp-config', () => {
+    return store.get('unipileWhatsapp')
+  })
+
+  ipcMain.handle(
+    'set-unipile-whatsapp-config',
+    (
+      _event,
+      config: {
+        enabled?: boolean
+        intervalMinutes?: number
+        apiBaseUrl?: string
+        apiToken?: string
+        accountId?: string
+      },
+    ) => {
+      const current = store.get('unipileWhatsapp')
+      store.set('unipileWhatsapp', { ...current, ...config })
+      getService('unipile-whatsapp')?.restart()
+    },
+  )
+
   ipcMain.handle('get-services-status', () => {
     return SERVICES.map((s) => ({
       name: s.name,

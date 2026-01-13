@@ -4,6 +4,7 @@ export type {
   ServiceStatus,
   BackfillProgress,
   ElectronAPI,
+  UnipileWhatsappConfig,
 } from '../shared-types'
 
 import type { ElectronAPI } from '../shared-types'

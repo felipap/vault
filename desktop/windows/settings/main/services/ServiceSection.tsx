@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react'
-import { ServiceConfig } from '../../../electron'
+import { ServiceConfig, UnipileWhatsappConfig } from '../../../electron'
 import { FullDiskPermission } from './FullDiskPermission'
 import { HistoricalBackfill } from './HistoricalBackfill'
 import { ScreenRecordingPermission } from './ScreenRecordingPermission'
+import { UnipileConfig } from './UnipileConfig'
 
 export type ServiceInfo = {
   name: string
   label: string
   description: string
-  getConfig: () => Promise<ServiceConfig>
-  setConfig: (config: Partial<ServiceConfig>) => Promise<void>
+  getConfig: () => Promise<ServiceConfig | UnipileWhatsappConfig>
+  setConfig: (config: Partial<ServiceConfig | UnipileWhatsappConfig>) => Promise<void>
   intervalOptions: { value: number; label: string }[]
 }
 
@@ -55,6 +56,20 @@ export const SERVICES: ServiceInfo[] = [
       { value: 360, label: 'Every 6 hours' },
       { value: 720, label: 'Every 12 hours' },
       { value: 1440, label: 'Every 24 hours' },
+    ],
+  },
+  {
+    name: 'unipile-whatsapp',
+    label: 'WhatsApp (Unipile)',
+    description: 'Sync WhatsApp messages via Unipile API',
+    getConfig: () => window.electron.getUnipileWhatsappConfig(),
+    setConfig: (config) => window.electron.setUnipileWhatsappConfig(config),
+    intervalOptions: [
+      { value: 1, label: 'Every 1 minute' },
+      { value: 5, label: 'Every 5 minutes' },
+      { value: 15, label: 'Every 15 minutes' },
+      { value: 30, label: 'Every 30 minutes' },
+      { value: 60, label: 'Every hour' },
     ],
   },
 ]
@@ -114,7 +129,7 @@ function StatusBadge({ enabled }: { enabled: boolean }) {
 }
 
 export function ServiceSection({ service }: { service: ServiceInfo }) {
-  const [config, setConfig] = useState<ServiceConfig | null>(null)
+  const [config, setConfig] = useState<ServiceConfig | UnipileWhatsappConfig | null>(null)
   const [isExpanded, setIsExpanded] = useState(false)
 
   useEffect(() => {
@@ -178,6 +193,16 @@ export function ServiceSection({ service }: { service: ServiceInfo }) {
           )}
           {service.name === 'contacts' && (
             <FullDiskPermission serviceName="contacts" />
+          )}
+          {service.name === 'unipile-whatsapp' && (
+            <UnipileConfig
+              config={config as UnipileWhatsappConfig}
+              onConfigChange={async (newConfig) => {
+                await service.setConfig(newConfig)
+                const updated = await service.getConfig()
+                setConfig(updated)
+              }}
+            />
           )}
 
           <div className="flex items-center justify-between pt-2">

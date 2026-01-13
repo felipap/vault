@@ -14,6 +14,12 @@ export interface ServiceConfig {
   intervalMinutes: number
 }
 
+export interface UnipileWhatsappConfig extends ServiceConfig {
+  apiBaseUrl: string | null
+  apiToken: string | null
+  accountId: string | null
+}
+
 export interface ServiceStatus {
   name: string
   isRunning: boolean
@@ -55,6 +61,10 @@ export interface ElectronAPI {
   // Contacts service
   getContactsSyncConfig: () => Promise<ServiceConfig>
   setContactsSyncConfig: (config: Partial<ServiceConfig>) => Promise<void>
+
+  // Unipile WhatsApp service
+  getUnipileWhatsappConfig: () => Promise<UnipileWhatsappConfig>
+  setUnipileWhatsappConfig: (config: Partial<UnipileWhatsappConfig>) => Promise<void>
 
   // Services status
   getServicesStatus: () => Promise<ServiceStatus[]>

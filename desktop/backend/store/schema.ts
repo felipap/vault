@@ -32,6 +32,14 @@ export type StoreSchema = {
     intervalMinutes: number
     nextSyncAfter: string | null
   }
+  unipileWhatsapp: {
+    enabled: boolean
+    intervalMinutes: number
+    nextSyncAfter: string | null
+    apiBaseUrl: string | null
+    apiToken: string | null
+    accountId: string | null
+  }
   requestLogs: ApiRequestLog[]
 }
 
@@ -55,6 +63,14 @@ export const DEFAULT_STATE: StoreSchema = {
     enabled: false,
     intervalMinutes: 60,
     nextSyncAfter: null,
+  },
+  unipileWhatsapp: {
+    enabled: false,
+    intervalMinutes: 5,
+    nextSyncAfter: null,
+    apiBaseUrl: null,
+    apiToken: null,
+    accountId: null,
   },
   requestLogs: [],
 }

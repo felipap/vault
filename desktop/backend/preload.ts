@@ -41,6 +41,17 @@ const api = {
     intervalMinutes?: number
   }) => ipcRenderer.invoke('set-contacts-sync-config', config),
 
+  // Unipile WhatsApp service
+  getUnipileWhatsappConfig: () =>
+    ipcRenderer.invoke('get-unipile-whatsapp-config'),
+  setUnipileWhatsappConfig: (config: {
+    enabled?: boolean
+    intervalMinutes?: number
+    apiBaseUrl?: string
+    apiToken?: string
+    accountId?: string
+  }) => ipcRenderer.invoke('set-unipile-whatsapp-config', config),
+
   // Services status
   getServicesStatus: () => ipcRenderer.invoke('get-services-status'),
   runServiceNow: (name: string) => ipcRenderer.invoke('run-service-now', name),
