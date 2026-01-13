@@ -2,19 +2,24 @@
 
 ## Now
 
-- [x] Feat: /api/locations/latest endpoint
+- [ ] Explore WhatsApp via Unipile
 
 ## Later
 
-- [ ] Encrypt locations?
+- [ ] Ability to emit read keys
+- [ ] Button to delete all data
+- [ ] Fix: providing the wrong key breaks the dashboard (stays in "Loading...")
 - [ ] Feat: implement an onboarding with info
 - [ ] Feat: whitelist or blacklist messages from particular numbers
 - [ ] Feat: Allow expire data after certain time
 - [ ] Think about real-time authentication by asking user directly
 - [ ] Feat: blur the texts in screenshots
+- [ ] Ability to rotate keys?
 
 ## Done
 
+- [x] Encrypt locations
+- [x] Feat: /api/locations/latest endpoint
 - [x] Feat: _Don't_ auto upload data when starting the app
 - [x] End-to-end encryption of message texts
 - [x] Security: store device secret in system keychain instead of plaintext JSON

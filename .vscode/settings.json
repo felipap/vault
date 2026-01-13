@@ -1,5 +1,5 @@
 {
-  "workbench.colorTheme": "Quiet Light",
+  "workbench.colorTheme": "Solarized Light",
   "search.exclude": {
     "**/node_modules": true,
     "**/bower_components": true,
