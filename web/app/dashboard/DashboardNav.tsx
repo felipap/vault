@@ -16,7 +16,7 @@ import { logout } from "./actions"
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview" },
   { href: "/dashboard/screenshots", label: "Screenshots" },
-  { href: "/dashboard/messages", label: "Messages" },
+  { href: "/dashboard/imessages", label: "iMessages" },
   { href: "/dashboard/contacts", label: "Contacts" },
   { href: "/dashboard/locations", label: "Locations" },
 ]
@@ -182,7 +182,7 @@ function EncryptionKeyButton() {
     if (showCountdown) {
       return `${minutesRemaining}m left`
     }
-    return "Decrypting"
+    return "Decrypted"
   }
 
   return (

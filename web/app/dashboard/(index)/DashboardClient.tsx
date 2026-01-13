@@ -78,14 +78,14 @@ export function DashboardClient() {
             href="/dashboard/screenshots"
           />
           <StatCard
-            label="Total Messages"
+            label="Total iMessages"
             value={stats.totalMessages.toLocaleString()}
-            href="/dashboard/messages"
+            href="/dashboard/imessages"
           />
           <StatCard
-            label="Total Chats"
+            label="iMessage Chats"
             value={stats.totalChats.toLocaleString()}
-            href="/dashboard/messages"
+            href="/dashboard/imessages"
           />
           <StatCard
             label="Total Contacts"

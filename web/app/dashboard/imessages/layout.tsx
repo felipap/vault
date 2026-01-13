@@ -5,8 +5,8 @@ import { usePathname } from "next/navigation"
 import { twMerge } from "tailwind-merge"
 
 const subTabs = [
-  { href: "/dashboard/messages", label: "iMessages" },
-  { href: "/dashboard/messages/chats", label: "Chats" },
+  { href: "/dashboard/imessages", label: "Messages" },
+  { href: "/dashboard/imessages/chats", label: "Chats" },
 ]
 
 interface Props {
@@ -19,13 +19,13 @@ export default function MessagesLayout({ children }: Props) {
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Messages</h1>
+        <h1 className="text-2xl font-semibold">iMessages</h1>
       </div>
 
       <div className="mb-6 flex gap-2">
         {subTabs.map((tab) => {
-          const isActive = tab.href === "/dashboard/messages"
-            ? pathname === "/dashboard/messages"
+          const isActive = tab.href === "/dashboard/imessages"
+            ? pathname === "/dashboard/imessages"
             : pathname.startsWith(tab.href)
 
           return (

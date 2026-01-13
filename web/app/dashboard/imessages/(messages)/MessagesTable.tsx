@@ -1,9 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { ArrowDownIcon, ArrowUpIcon, LockIcon } from "@/ui/icons"
 import { Pagination } from "@/ui/Pagination"
-import { JsonDrawer } from "@/ui/JsonDrawer"
 import { isEncrypted } from "@/lib/encryption"
 import { type Message } from "./actions"
 import {
@@ -63,8 +62,7 @@ export function MessagesTable({
   totalPages,
   onPageChange,
 }: Props) {
-  const [selectedMessage, setSelectedMessage] =
-    useState<DecryptedMessage | null>(null)
+  const router = useRouter()
 
   const table = useReactTable({
     data: messages,
@@ -99,7 +97,9 @@ export function MessagesTable({
             {table.getRowModel().rows.map((row) => (
               <tr
                 key={row.id}
-                onClick={() => setSelectedMessage(row.original)}
+                onClick={() =>
+                  router.push(`/dashboard/imessages/${row.original.id}`)
+                }
                 className="cursor-pointer transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900"
               >
                 {row.getVisibleCells().map((cell) => (
@@ -124,13 +124,6 @@ export function MessagesTable({
         page={page}
         totalPages={totalPages}
         onPageChange={onPageChange}
-      />
-
-      <JsonDrawer
-        isOpen={selectedMessage !== null}
-        onClose={() => setSelectedMessage(null)}
-        title="Message Details"
-        data={selectedMessage}
       />
     </>
   )

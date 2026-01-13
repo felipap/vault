@@ -24,6 +24,39 @@ export type MessagesPage = {
   totalPages: number
 }
 
+export async function getMessage(id: string): Promise<Message | null> {
+  if (!(await isAuthenticated())) {
+    unauthorized()
+  }
+
+  const message = await db.query.iMessages.findFirst({
+    where: eq(iMessages.id, id),
+    columns: {
+      id: true,
+      text: true,
+      contact: true,
+      date: true,
+      isFromMe: true,
+      hasAttachments: true,
+      service: true,
+    },
+  })
+
+  if (!message) {
+    return null
+  }
+
+  return {
+    id: message.id,
+    text: message.text,
+    contact: message.contact,
+    date: message.date,
+    isFromMe: message.isFromMe === 1,
+    hasAttachments: message.hasAttachments === 1,
+    service: message.service,
+  }
+}
+
 export async function getMessages(
   page: number = 1,
   pageSize: number = 20
