@@ -1,3 +1,5 @@
+// This batch stuff here seems way too complicated but whatever...
+
 import { db } from "@/db"
 import { DEFAULT_USER_ID, iMessageAttachments, iMessages } from "@/db/schema"
 import { logRead, logWrite } from "@/lib/activity-log"
@@ -298,7 +300,26 @@ function validateMessages(messages: unknown[]) {
       continue
     }
 
-    validMessages.push(result.data)
+    const parsed = result.data
+
+    // If message has attachments, all attachments must have dataBase64
+    if (parsed.hasAttachments && parsed.attachments?.length) {
+      const invalidAttachments = parsed.attachments.filter(
+        (att) => !att.dataBase64
+      )
+      if (invalidAttachments.length > 0) {
+        const error = `Message has ${invalidAttachments.length} attachment(s) missing dataBase64: ${invalidAttachments.map((a) => a.id).join(", ")}`
+        rejectedMessages.push({ index: i, message, error })
+        const truncatedMessage = truncateForLog(message)
+        console.warn(
+          `Rejected message at index ${i}:`,
+          JSON.stringify({ message: truncatedMessage, error })
+        )
+        continue
+      }
+    }
+
+    validMessages.push(parsed)
   }
 
   return { validMessages, rejectedMessages }
@@ -426,28 +447,20 @@ async function insertAttachments(
   syncTime: string
 ) {
   const insertedAttachments = []
-  const messageGuidMap = new Map(insertedMessages.map((m) => [m.guid, m.id]))
+  const insertedGuids = new Set(insertedMessages.map((m) => m.guid))
 
   for (const message of validMessages) {
     if (!message.attachments || message.attachments.length === 0) {
       continue
     }
 
-    const messageId = messageGuidMap.get(message.guid)
-    if (!messageId) {
+    if (!insertedGuids.has(message.guid)) {
       // Message wasn't inserted (duplicate), skip attachments
       continue
     }
 
     for (const attachment of message.attachments) {
-      // Only insert if we have base64 data
-      if (!attachment.dataBase64) {
-        console.warn(
-          `Skipping attachment ${attachment.id} for message ${message.guid}: no base64 data`
-        )
-        continue
-      }
-
+      // dataBase64 is guaranteed to exist - validated in validateMessages
       const result = await db
         .insert(iMessageAttachments)
         .values({
@@ -458,7 +471,7 @@ async function insertAttachments(
           mimeType: attachment.mimeType,
           size: attachment.size,
           isImage: attachment.isImage ? 1 : 0,
-          dataBase64: attachment.dataBase64,
+          dataBase64: attachment.dataBase64!,
           deviceId,
           syncTime: new Date(syncTime),
         })
