@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
-import { getMessages, type Message } from "./actions"
+import { getMessages, type Message, type SortBy } from "./actions"
 import { decryptText, isEncrypted, getEncryptionKey } from "@/lib/encryption"
 import { MessagesTable, type DecryptedMessage } from "./MessagesTable"
 
@@ -11,6 +11,7 @@ export default function Page() {
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [total, setTotal] = useState(0)
+  const [sortBy, setSortBy] = useState<SortBy>("syncTime")
 
   const decryptMessages = useCallback(
     async (msgs: Message[]): Promise<DecryptedMessage[]> => {
@@ -34,7 +35,7 @@ export default function Page() {
   useEffect(() => {
     async function load() {
       setLoading(true)
-      const data = await getMessages(page)
+      const data = await getMessages(page, 20, sortBy)
       const decrypted = await decryptMessages(data.messages)
       setMessages(decrypted)
       setTotalPages(data.totalPages)
@@ -42,7 +43,12 @@ export default function Page() {
       setLoading(false)
     }
     load()
-  }, [page, decryptMessages])
+  }, [page, sortBy, decryptMessages])
+
+  function handleSortChange(newSortBy: SortBy) {
+    setSortBy(newSortBy)
+    setPage(1)
+  }
 
   if (loading) {
     return <p className="text-zinc-500">Loading...</p>
@@ -54,15 +60,41 @@ export default function Page() {
 
   return (
     <>
-      <div className="mb-4 text-sm text-zinc-500">
-        {total.toLocaleString()} total messages
+      <div className="mb-4 flex items-center justify-between">
+        <span className="text-sm text-zinc-500">
+          {total.toLocaleString()} total messages
+        </span>
+        <SortSelector sortBy={sortBy} onChange={handleSortChange} />
       </div>
       <MessagesTable
         messages={messages}
         page={page}
         totalPages={totalPages}
         onPageChange={setPage}
+        sortBy={sortBy}
       />
     </>
+  )
+}
+
+function SortSelector({
+  sortBy,
+  onChange,
+}: {
+  sortBy: SortBy
+  onChange: (sortBy: SortBy) => void
+}) {
+  return (
+    <div className="flex items-center gap-2 text-sm">
+      <span className="text-zinc-500">Sort by:</span>
+      <select
+        value={sortBy}
+        onChange={(e) => onChange(e.target.value as SortBy)}
+        className="rounded-md border border-zinc-200 bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+      >
+        <option value="syncTime">Time received</option>
+        <option value="date">Message date</option>
+      </select>
+    </div>
   )
 }

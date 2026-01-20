@@ -6,11 +6,14 @@ import { DEFAULT_USER_ID, iMessages } from "@/db/schema"
 import { desc, eq, sql } from "drizzle-orm"
 import { unauthorized } from "next/navigation"
 
+export type SortBy = "syncTime" | "date"
+
 export type Message = {
   id: string
   text: string | null
   contact: string
   date: Date | null
+  syncTime: Date
   isFromMe: boolean
   hasAttachments: boolean
   service: string
@@ -36,6 +39,7 @@ export async function getMessage(id: string): Promise<Message | null> {
       text: true,
       contact: true,
       date: true,
+      syncTime: true,
       isFromMe: true,
       hasAttachments: true,
       service: true,
@@ -51,6 +55,7 @@ export async function getMessage(id: string): Promise<Message | null> {
     text: message.text,
     contact: message.contact,
     date: message.date,
+    syncTime: message.syncTime,
     isFromMe: message.isFromMe === 1,
     hasAttachments: message.hasAttachments === 1,
     service: message.service,
@@ -59,7 +64,8 @@ export async function getMessage(id: string): Promise<Message | null> {
 
 export async function getMessages(
   page: number = 1,
-  pageSize: number = 20
+  pageSize: number = 20,
+  sortBy: SortBy = "syncTime"
 ): Promise<MessagesPage> {
   if (!(await isAuthenticated())) {
     unauthorized()
@@ -74,9 +80,11 @@ export async function getMessages(
 
   const total = countResult.count
 
+  const orderByColumn = sortBy === "syncTime" ? iMessages.syncTime : iMessages.date
+
   const messages = await db.query.iMessages.findMany({
     where: eq(iMessages.userId, DEFAULT_USER_ID),
-    orderBy: desc(iMessages.date),
+    orderBy: desc(orderByColumn),
     limit: pageSize,
     offset,
     columns: {
@@ -84,6 +92,7 @@ export async function getMessages(
       text: true,
       contact: true,
       date: true,
+      syncTime: true,
       isFromMe: true,
       hasAttachments: true,
       service: true,
@@ -96,6 +105,7 @@ export async function getMessages(
       text: m.text,
       contact: m.contact,
       date: m.date,
+      syncTime: m.syncTime,
       isFromMe: m.isFromMe === 1,
       hasAttachments: m.hasAttachments === 1,
       service: m.service,

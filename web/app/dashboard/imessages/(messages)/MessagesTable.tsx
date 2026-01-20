@@ -4,56 +4,16 @@ import { useRouter } from "next/navigation"
 import { ArrowDownIcon, ArrowUpIcon, LockIcon } from "@/ui/icons"
 import { Pagination } from "@/ui/Pagination"
 import { isEncrypted } from "@/lib/encryption"
-import { type Message } from "./actions"
-import {
-  createColumnHelper,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-} from "@tanstack/react-table"
+import { type Message, type SortBy } from "./actions"
 
 export type DecryptedMessage = Message & { decryptedText: string | null }
-
-const columnHelper = createColumnHelper<DecryptedMessage>()
-
-const columns = [
-  columnHelper.accessor("isFromMe", {
-    header: "Direction",
-    cell: (info) => <DirectionBadge isFromMe={info.getValue()} />,
-  }),
-  columnHelper.display({
-    id: "contact",
-    header: "Contact",
-    cell: ({ row }) => (
-      <div className="flex items-center gap-2">
-        <ServiceIcon service={row.original.service} />
-        <span className="text-sm">{formatContact(row.original.contact)}</span>
-      </div>
-    ),
-  }),
-  columnHelper.display({
-    id: "message",
-    header: "Message",
-    cell: ({ row }) => <MessageCell message={row.original} />,
-  }),
-  columnHelper.accessor("date", {
-    header: "Date",
-    cell: (info) => {
-      const date = info.getValue()
-      return (
-        <span className="text-zinc-500">
-          {date ? new Date(date).toLocaleString() : "—"}
-        </span>
-      )
-    },
-  }),
-]
 
 type Props = {
   messages: DecryptedMessage[]
   page: number
   totalPages: number
   onPageChange: (page: number) => void
+  sortBy: SortBy
 }
 
 export function MessagesTable({
@@ -61,59 +21,54 @@ export function MessagesTable({
   page,
   totalPages,
   onPageChange,
+  sortBy,
 }: Props) {
   const router = useRouter()
-
-  const table = useReactTable({
-    data: messages,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-  })
 
   return (
     <>
       <div className="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800">
         <table className="w-full">
           <thead className="bg-zinc-50 dark:bg-zinc-900">
-            {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    className="px-4 py-3 text-left text-sm font-medium text-zinc-500"
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                  </th>
-                ))}
-              </tr>
-            ))}
+            <tr>
+              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-500">
+                Direction
+              </th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-500">
+                Contact
+              </th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-500">
+                Message
+              </th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-500">
+                {sortBy === "syncTime" ? "Received" : "Message Date"}
+              </th>
+            </tr>
           </thead>
           <tbody className="divide-y divide-zinc-200 bg-white dark:divide-zinc-800 dark:bg-zinc-950">
-            {table.getRowModel().rows.map((row) => (
+            {messages.map((message) => (
               <tr
-                key={row.id}
+                key={message.id}
                 onClick={() =>
-                  router.push(`/dashboard/imessages/${row.original.id}`)
+                  router.push(`/dashboard/imessages/${message.id}`)
                 }
                 className="cursor-pointer transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900"
               >
-                {row.getVisibleCells().map((cell) => (
-                  <td
-                    key={cell.id}
-                    className={`px-4 py-3 text-sm ${
-                      cell.column.id === "message"
-                        ? "max-w-[300px] truncate text-zinc-600 dark:text-zinc-400"
-                        : ""
-                    }`}
-                  >
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
+                <td className="px-4 py-3">
+                  <DirectionBadge isFromMe={message.isFromMe} />
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <ServiceIcon service={message.service} />
+                    <span className="text-sm">{formatContact(message.contact)}</span>
+                  </div>
+                </td>
+                <td className="max-w-[300px] truncate px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
+                  <MessageCell message={message} />
+                </td>
+                <td className="px-4 py-3 text-sm">
+                  <DateCell message={message} sortBy={sortBy} />
+                </td>
               </tr>
             ))}
           </tbody>
@@ -126,6 +81,25 @@ export function MessagesTable({
         onPageChange={onPageChange}
       />
     </>
+  )
+}
+
+function DateCell({ message, sortBy }: { message: DecryptedMessage; sortBy: SortBy }) {
+  const primaryDate = sortBy === "syncTime" ? message.syncTime : message.date
+  const secondaryDate = sortBy === "syncTime" ? message.date : message.syncTime
+  const secondaryLabel = sortBy === "syncTime" ? "sent" : "received"
+
+  return (
+    <div className="flex flex-col">
+      <span className="text-zinc-700 dark:text-zinc-300">
+        {primaryDate ? new Date(primaryDate).toLocaleString() : "—"}
+      </span>
+      {secondaryDate && (
+        <span className="text-xs text-zinc-400">
+          {secondaryLabel}: {new Date(secondaryDate).toLocaleString()}
+        </span>
+      )}
+    </div>
   )
 }
 

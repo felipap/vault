@@ -3,7 +3,7 @@
 import { ArrowDownIcon, ArrowUpIcon, LockIcon } from "@/ui/icons"
 import { Pagination } from "@/ui/Pagination"
 import { isEncrypted } from "@/lib/encryption"
-import { type Message } from "./(messages)/actions"
+import { type Message, type SortBy } from "./(messages)/actions"
 
 export type DecryptedMessage = Message & { decryptedText: string | null }
 
