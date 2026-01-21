@@ -3,8 +3,19 @@
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
-import { CloseIcon, LockIcon, FileIcon, ImageIcon, DownloadIcon } from "@/ui/icons"
-import { decryptText, decryptBinaryToBase64, isEncrypted, getEncryptionKey } from "@/lib/encryption"
+import {
+  CloseIcon,
+  LockIcon,
+  FileIcon,
+  ImageIcon,
+  DownloadIcon,
+} from "@/ui/icons"
+import {
+  decryptText,
+  decryptBinaryToBase64,
+  isEncrypted,
+  getEncryptionKey,
+} from "@/lib/encryption"
 import { type MessageWithAttachments, type Attachment } from "../../actions"
 
 type Props = {
@@ -19,7 +30,9 @@ export function MessageDrawer({ message }: Props) {
   const router = useRouter()
   const drawerRef = useRef<HTMLDivElement>(null)
   const [decryptedText, setDecryptedText] = useState<string | null>(null)
-  const [decryptedAttachments, setDecryptedAttachments] = useState<DecryptedAttachment[]>([])
+  const [decryptedAttachments, setDecryptedAttachments] = useState<
+    DecryptedAttachment[]
+  >([])
 
   useEffect(() => {
     async function decrypt() {
@@ -53,7 +66,10 @@ export function MessageDrawer({ message }: Props) {
             return { ...attachment, decryptedDataBase64: null }
           }
           // Use decryptBinaryToBase64 for attachments since they contain binary data
-          const decryptedData = await decryptBinaryToBase64(attachment.dataBase64, key)
+          const decryptedData = await decryptBinaryToBase64(
+            attachment.dataBase64,
+            key
+          )
           return { ...attachment, decryptedDataBase64: decryptedData }
         })
       )
@@ -127,7 +143,9 @@ export function MessageDrawer({ message }: Props) {
             <InfoRow label="Service" value={message.service} />
             <InfoRow
               label="Date"
-              value={message.date ? new Date(message.date).toLocaleString() : "—"}
+              value={
+                message.date ? new Date(message.date).toLocaleString() : "—"
+              }
             />
             <div>
               <label className="mb-1 block text-sm font-medium text-zinc-500">
@@ -162,7 +180,10 @@ export function MessageDrawer({ message }: Props) {
                 </label>
                 <div className="space-y-3">
                   {decryptedAttachments.map((attachment) => (
-                    <AttachmentCard key={attachment.id} attachment={attachment} />
+                    <AttachmentCard
+                      key={attachment.id}
+                      attachment={attachment}
+                    />
                   ))}
                 </div>
               </div>
@@ -205,7 +226,8 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 }
 
 function AttachmentCard({ attachment }: { attachment: DecryptedAttachment }) {
-  const isEncryptedAttachment = attachment.dataBase64 && isEncrypted(attachment.dataBase64)
+  const isEncryptedAttachment =
+    attachment.dataBase64 && isEncrypted(attachment.dataBase64)
   const hasData = !!attachment.decryptedDataBase64
 
   const handleDownload = () => {
