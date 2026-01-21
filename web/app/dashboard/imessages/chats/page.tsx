@@ -1,7 +1,12 @@
 "use client"
 
 import { useEffect, useState, useCallback, useRef } from "react"
-import { getChats, getContactLookup, type Chat, type ContactLookup } from "./actions"
+import {
+  getChats,
+  getContactLookup,
+  type Chat,
+  type ContactLookup,
+} from "./actions"
 import { decryptText, isEncrypted, getEncryptionKey } from "@/lib/encryption"
 import { ChatsTable, type DecryptedChat } from "./ChatsTable"
 import { SearchIcon } from "@/ui/icons"
@@ -98,7 +103,11 @@ type SearchInputProps = {
   debounceMs?: number
 }
 
-function SearchInput({ placeholder, onChange, debounceMs = 300 }: SearchInputProps) {
+function SearchInput({
+  placeholder,
+  onChange,
+  debounceMs = 300,
+}: SearchInputProps) {
   const [value, setValue] = useState("")
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -118,16 +127,15 @@ function SearchInput({ placeholder, onChange, debounceMs = 300 }: SearchInputPro
 
   return (
     <div className="relative">
-      <SearchIcon
-        size={16}
-        className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400"
-      />
+      <div className="absolute top-2.5 left-2">
+        <SearchIcon size={16} className="text-zinc-400" />
+      </div>
       <input
         type="text"
         placeholder={placeholder}
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        className="w-64 rounded-lg border border-zinc-200 bg-white py-2 pl-9 pr-3 text-sm placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-zinc-600"
+        className="w-[300px] rounded-lg border border-zinc-200 bg-white py-2 pl-7 pr-3 text-sm placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-zinc-600 text-sm"
       />
     </div>
   )

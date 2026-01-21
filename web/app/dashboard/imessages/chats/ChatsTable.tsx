@@ -21,6 +21,7 @@ function createColumns(contactLookup: ContactLookup) {
     columnHelper.display({
       id: "contact",
       header: "Contact",
+      size: 300,
       cell: ({ row }) => {
         const chat = row.original
 
@@ -30,14 +31,14 @@ function createColumns(contactLookup: ContactLookup) {
             .join(", ")
 
           return (
-            <div className="flex items-center gap-2">
+            <div className="flex min-w-0 items-center gap-2">
               <ContactAvatar name="Group" isGroup={true} />
-              <div className="flex flex-col">
+              <div className="flex min-w-0 flex-col">
                 <span className="text-sm font-medium">
                   Group ({chat.participantCount})
                 </span>
                 <span
-                  className="max-w-[200px] truncate text-xs text-zinc-500"
+                  className="truncate text-xs text-zinc-500"
                   title={participantNames}
                 >
                   {participantNames}
@@ -52,12 +53,14 @@ function createColumns(contactLookup: ContactLookup) {
         const hasContactName = resolvedName !== formatContact(participant)
 
         return (
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 items-center gap-2">
             <ContactAvatar name={resolvedName} isGroup={false} />
-            <div className="flex flex-col">
-              <span className="text-sm font-medium">{resolvedName}</span>
+            <div className="flex min-w-0 flex-col">
+              <span className="truncate text-sm font-medium">
+                {resolvedName}
+              </span>
               {hasContactName && (
-                <span className="text-xs text-zinc-500">
+                <span className="truncate text-xs text-zinc-500">
                   {formatContact(participant)}
                 </span>
               )}
@@ -159,6 +162,10 @@ export function ChatsTable({
                   <th
                     key={header.id}
                     className="px-4 py-3 text-left text-sm font-medium text-zinc-500"
+                    style={{
+                      maxWidth: header.column.getSize(),
+                      width: header.column.getSize(),
+                    }}
                   >
                     {header.isPlaceholder
                       ? null
@@ -178,7 +185,14 @@ export function ChatsTable({
                 className="transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900"
               >
                 {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="px-4 py-3 text-sm">
+                  <td
+                    key={cell.id}
+                    className="px-4 py-3 text-sm"
+                    style={{
+                      maxWidth: cell.column.getSize(),
+                      width: cell.column.getSize(),
+                    }}
+                  >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}
