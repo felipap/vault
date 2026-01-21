@@ -47,10 +47,8 @@ export function getIsOutsideApplicationsFolder(): boolean {
 }
 
 export function getIconPath(env?: 'production' | 'development'): string | null {
-  const currentEnv =
-    env ||
-    (process.env.NODE_ENV as 'production' | 'development') ||
-    'development'
+  // Use app.isPackaged instead of NODE_ENV to reliably detect production
+  const currentEnv = env || (app.isPackaged ? 'production' : 'development')
 
   const possibleIconPaths = [
     path.join(__dirname, '../../assets/icons/', `${currentEnv}.png`),
