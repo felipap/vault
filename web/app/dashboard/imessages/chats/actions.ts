@@ -27,18 +27,22 @@ export type ChatsPage = {
 
 export async function getChats(
   page: number = 1,
-  pageSize: number = 20
+  pageSize: number = 20,
+  search: string = ""
 ): Promise<ChatsPage> {
   if (!(await isAuthenticated())) {
     unauthorized()
   }
 
   const offset = (page - 1) * pageSize
+  const normalizedSearch = search.replace(/\D/g, "")
+  const hasSearch = normalizedSearch.length > 0
 
   const [countResult] = await db.execute<{ count: number }>(sql`
     SELECT COUNT(DISTINCT COALESCE(chat_id, contact))::int as count
     FROM imessages
     WHERE user_id = ${DEFAULT_USER_ID}
+      ${hasSearch ? sql`AND REGEXP_REPLACE(contact, '[^0-9]', '', 'g') LIKE '%' || ${normalizedSearch} || '%'` : sql``}
   `)
 
   const total = countResult.count
@@ -77,6 +81,12 @@ export async function getChats(
       FROM imessages
       WHERE user_id = ${DEFAULT_USER_ID}
       GROUP BY COALESCE(chat_id, contact)
+    ),
+    filtered_chats AS (
+      SELECT DISTINCT COALESCE(chat_id, contact) as effective_chat_id
+      FROM imessages
+      WHERE user_id = ${DEFAULT_USER_ID}
+        ${hasSearch ? sql`AND REGEXP_REPLACE(contact, '[^0-9]', '', 'g') LIKE '%' || ${normalizedSearch} || '%'` : sql``}
     )
     SELECT
       rm.effective_chat_id as chat_id,
@@ -88,6 +98,7 @@ export async function getChats(
       cp.message_count
     FROM ranked_messages rm
     JOIN chat_participants cp ON rm.effective_chat_id = cp.effective_chat_id
+    ${hasSearch ? sql`JOIN filtered_chats fc ON rm.effective_chat_id = fc.effective_chat_id` : sql``}
     WHERE rm.rn = 1
     ORDER BY rm.date DESC NULLS LAST
     LIMIT ${pageSize}

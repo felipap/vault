@@ -101,7 +101,7 @@ export async function getMessage(id: string): Promise<MessageWithAttachments | n
 export async function getMessages(
   page: number = 1,
   pageSize: number = 20,
-  sortBy: SortBy = "syncTime"
+  sortBy: SortBy = "date"
 ): Promise<MessagesPage> {
   if (!(await isAuthenticated())) {
     unauthorized()

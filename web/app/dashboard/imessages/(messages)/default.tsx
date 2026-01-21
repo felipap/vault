@@ -13,7 +13,7 @@ export default function Page() {
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [total, setTotal] = useState(0)
-  const [sortBy, setSortBy] = useState<SortBy>("syncTime")
+  const [sortBy, setSortBy] = useState<SortBy>("date")
 
   const decryptMessages = useCallback(
     async (msgs: Message[]): Promise<DecryptedMessage[]> => {

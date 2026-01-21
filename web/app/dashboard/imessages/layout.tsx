@@ -36,9 +36,9 @@ export default function MessagesLayout({ children }: Props) {
         <h1 className="text-2xl font-semibold">iMessages</h1>
         <button
           onClick={() => setShowConfirm(true)}
-          className="flex items-center gap-2 rounded-lg bg-red-100 px-3 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
+          className="flex items-center gap-1.5 rounded-md bg-red-100 px-2 py-1 text-xs font-medium text-red-700 transition-colors hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
         >
-          <TrashIcon size={16} />
+          <TrashIcon size={12} />
           Delete All
         </button>
       </div>
