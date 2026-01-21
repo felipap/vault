@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
   env: {
     APP_VERSION: packageJson.version,
   },
+  experimental: {
+    middlewareClientMaxBodySize: "100mb",
+  },
 }
 
 export default nextConfig

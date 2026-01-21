@@ -259,13 +259,13 @@ function AttachmentCard({ attachment }: { attachment: DecryptedAttachment }) {
     return (
       <div className="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800">
         <div className="relative">
-          <Image
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
             src={`data:${attachment.mimeType};base64,${attachment.decryptedDataBase64}`}
             alt={attachment.filename}
             width={400}
             height={256}
             className="max-h-64 w-full object-contain bg-zinc-100 dark:bg-zinc-900"
-            unoptimized
           />
           {isEncryptedAttachment && (
             <span
