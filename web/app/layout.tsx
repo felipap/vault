@@ -13,7 +13,10 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "Context",
+  title: {
+    default: "Context",
+    template: "%s | Context",
+  },
   description: "Screenshot capture and storage server",
 }
 
