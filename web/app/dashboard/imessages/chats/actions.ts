@@ -2,8 +2,8 @@
 
 import { isAuthenticated } from "@/lib/admin-auth"
 import { db } from "@/db"
-import { DEFAULT_USER_ID } from "@/db/schema"
-import { sql } from "drizzle-orm"
+import { Contacts, DEFAULT_USER_ID } from "@/db/schema"
+import { eq, sql } from "drizzle-orm"
 import { unauthorized } from "next/navigation"
 
 export type Chat = {
@@ -110,4 +110,62 @@ export async function getChats(
     pageSize,
     totalPages: Math.ceil(total / pageSize),
   }
+}
+
+export type ContactLookup = Record<string, string>
+
+export async function getContactLookup(): Promise<ContactLookup> {
+  if (!(await isAuthenticated())) {
+    unauthorized()
+  }
+
+  const contacts = await db.query.Contacts.findMany({
+    where: eq(Contacts.userId, DEFAULT_USER_ID),
+  })
+
+  const lookup: ContactLookup = {}
+
+  for (const contact of contacts) {
+    const name = [contact.firstName, contact.lastName]
+      .filter(Boolean)
+      .join(" ")
+      .trim()
+
+    if (!name) {
+      continue
+    }
+
+    let emails: string[] = []
+    let phoneNumbers: string[] = []
+
+    try {
+      emails = JSON.parse(contact.emails)
+    } catch {}
+
+    try {
+      phoneNumbers = JSON.parse(contact.phoneNumbers)
+    } catch {}
+
+    // Map emails to contact name
+    for (const email of emails) {
+      const normalizedEmail = email.toLowerCase().trim()
+      if (normalizedEmail) {
+        lookup[normalizedEmail] = name
+      }
+    }
+
+    // Map phone numbers to contact name (normalized)
+    for (const phone of phoneNumbers) {
+      const normalizedPhone = normalizePhone(phone)
+      if (normalizedPhone) {
+        lookup[normalizedPhone] = name
+      }
+    }
+  }
+
+  return lookup
+}
+
+function normalizePhone(phone: string): string {
+  return phone.replace(/\D/g, "")
 }

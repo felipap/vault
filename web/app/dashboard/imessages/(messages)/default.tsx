@@ -2,11 +2,13 @@
 
 import { useEffect, useState, useCallback } from "react"
 import { getMessages, type Message, type SortBy } from "./actions"
+import { getContactLookup, type ContactLookup } from "../chats/actions"
 import { decryptText, isEncrypted, getEncryptionKey } from "@/lib/encryption"
 import { MessagesTable, type DecryptedMessage } from "./MessagesTable"
 
 export default function Page() {
   const [messages, setMessages] = useState<DecryptedMessage[]>([])
+  const [contactLookup, setContactLookup] = useState<ContactLookup>({})
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
@@ -31,6 +33,11 @@ export default function Page() {
     },
     []
   )
+
+  // Fetch contacts once on mount
+  useEffect(() => {
+    getContactLookup().then(setContactLookup)
+  }, [])
 
   useEffect(() => {
     async function load() {
@@ -68,6 +75,7 @@ export default function Page() {
       </div>
       <MessagesTable
         messages={messages}
+        contactLookup={contactLookup}
         page={page}
         totalPages={totalPages}
         onPageChange={setPage}

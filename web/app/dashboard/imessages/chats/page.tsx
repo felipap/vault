@@ -1,12 +1,13 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
-import { getChats, type Chat } from "./actions"
+import { getChats, getContactLookup, type Chat, type ContactLookup } from "./actions"
 import { decryptText, isEncrypted, getEncryptionKey } from "@/lib/encryption"
 import { ChatsTable, type DecryptedChat } from "./ChatsTable"
 
 export default function Page() {
   const [chats, setChats] = useState<DecryptedChat[]>([])
+  const [contactLookup, setContactLookup] = useState<ContactLookup>({})
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
@@ -33,6 +34,11 @@ export default function Page() {
     },
     []
   )
+
+  // Fetch contacts once on mount
+  useEffect(() => {
+    getContactLookup().then(setContactLookup)
+  }, [])
 
   useEffect(() => {
     async function load() {
@@ -62,6 +68,7 @@ export default function Page() {
       </div>
       <ChatsTable
         chats={chats}
+        contactLookup={contactLookup}
         page={page}
         totalPages={totalPages}
         onPageChange={setPage}
