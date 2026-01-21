@@ -58,15 +58,16 @@ export async function apiRequest<T = unknown>({
     })
   } catch (error) {
     console.log(`url: ${url}`)
+    const message = error instanceof Error ? error.message : 'Network error'
     addRequestLog({
       timestamp: startTime,
       method,
       url,
       isError: true,
       duration: Date.now() - startTime,
-      text: error instanceof Error ? error.message : 'Network error',
+      text: message,
     })
-    throw error
+    return { error: message, errorStatus: 0 }
   }
 
   const duration = Date.now() - startTime
@@ -95,13 +96,12 @@ export async function apiRequest<T = unknown>({
     duration,
   })
 
-  // const contentType = response.headers.get('content-type')
-  // if (!contentType || !contentType.includes('application/json')) {
-  //   const text = await response.text()
-  //   return { data: text as T }
-  // }
-
-  const json = (await response.json()) as T
+  let json: T
+  try {
+    json = (await response.json()) as T
+  } catch {
+    return { error: 'Invalid JSON response', errorStatus: response.status }
+  }
   return { data: json }
 }
 

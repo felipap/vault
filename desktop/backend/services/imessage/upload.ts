@@ -30,9 +30,10 @@ export async function uploadMessages(
   }
 
   const encryptionKey = getEncryptionKey()
-  const messagesToUpload = encryptionKey
-    ? encryptMessages(messages, encryptionKey)
-    : messages
+  if (!encryptionKey) {
+    return { error: 'Encryption key not set' }
+  }
+  const messagesToUpload = encryptMessages(messages, encryptionKey)
 
   const res = await apiRequest({
     path: '/api/imessages',
