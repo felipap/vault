@@ -90,4 +90,8 @@ export interface ElectronAPI {
   startIMessageBackfill: (days: number) => Promise<void>
   cancelIMessageBackfill: () => Promise<void>
   getIMessageBackfillProgress: () => Promise<BackfillProgress>
+
+  // App settings
+  getOpenAtLogin: () => Promise<boolean>
+  setOpenAtLogin: (enabled: boolean) => Promise<void>
 }

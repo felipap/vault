@@ -49,20 +49,23 @@ export function MainTab() {
   const [serverUrl, setServerUrl] = useState('')
   const [deviceSecret, setDeviceSecret] = useState('')
   const [encryptionKey, setEncryptionKey] = useState('')
+  const [openAtLogin, setOpenAtLogin] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
   const hasEncryptionKey = encryptionKey.length > 0
 
   useEffect(() => {
     async function load() {
-      const [url, secret, key] = await Promise.all([
+      const [url, secret, key, loginEnabled] = await Promise.all([
         window.electron.getServerUrl(),
         window.electron.getDeviceSecret(),
         window.electron.getEncryptionKey(),
+        window.electron.getOpenAtLogin(),
       ])
       setServerUrl(url ?? '')
       setDeviceSecret(secret ?? '')
       setEncryptionKey(key ?? '')
+      setOpenAtLogin(loginEnabled)
       setIsLoading(false)
     }
     load()
@@ -80,6 +83,11 @@ export function MainTab() {
     await window.electron.setEncryptionKey(encryptionKey)
   }
 
+  const handleOpenAtLoginChange = async (enabled: boolean) => {
+    setOpenAtLogin(enabled)
+    await window.electron.setOpenAtLogin(enabled)
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12 text-[var(--text-color-secondary)]">
@@ -90,6 +98,22 @@ export function MainTab() {
 
   return (
     <div className="space-y-6">
+      <div>
+        <h2 className="text-lg font-semibold mb-4">App Settings</h2>
+        <label className="flex items-center gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={openAtLogin}
+            onChange={(e) => handleOpenAtLoginChange(e.target.checked)}
+            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          />
+          <span className="text-sm">Start on login</span>
+        </label>
+        <p className="text-xs text-[var(--text-color-secondary)] mt-1 ml-7">
+          Automatically start Contexter when you log in to your computer
+        </p>
+      </div>
+
       <div>
         <h2 className="text-lg font-semibold mb-4">Server Connection</h2>
 

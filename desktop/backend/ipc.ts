@@ -1,4 +1,4 @@
-import { ipcMain, shell, systemPreferences } from 'electron'
+import { ipcMain, shell, systemPreferences, app } from 'electron'
 import * as fs from 'fs'
 import * as os from 'os'
 import * as path from 'path'
@@ -174,5 +174,15 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('get-imessage-backfill-progress', () => {
     return imessageBackfill.getProgress()
+  })
+
+  // App settings
+  ipcMain.handle('get-open-at-login', () => {
+    const settings = app.getLoginItemSettings()
+    return settings.openAtLogin
+  })
+
+  ipcMain.handle('set-open-at-login', (_event, enabled: boolean) => {
+    app.setLoginItemSettings({ openAtLogin: enabled })
   })
 }

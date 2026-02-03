@@ -72,6 +72,11 @@ const api = {
   cancelIMessageBackfill: () => ipcRenderer.invoke('cancel-imessage-backfill'),
   getIMessageBackfillProgress: () =>
     ipcRenderer.invoke('get-imessage-backfill-progress'),
+
+  // App settings
+  getOpenAtLogin: () => ipcRenderer.invoke('get-open-at-login'),
+  setOpenAtLogin: (enabled: boolean) =>
+    ipcRenderer.invoke('set-open-at-login', enabled),
 } satisfies ElectronAPI
 
 contextBridge.exposeInMainWorld('electron', api)
