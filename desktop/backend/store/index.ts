@@ -66,6 +66,19 @@ export function getDeviceId(): string {
   return id
 }
 
+export function getLastExportedMessageDate(): Date | null {
+  const stored = store.get('imessageExport').lastExportedMessageDate
+  if (!stored) {
+    return null
+  }
+  return new Date(stored)
+}
+
+export function setLastExportedMessageDate(date: Date): void {
+  const config = store.get('imessageExport')
+  store.set('imessageExport', { ...config, lastExportedMessageDate: date.toISOString() })
+}
+
 export function addRequestLog(log: Omit<ApiRequestLog, 'id'>): void {
   const logs = store.get('requestLogs')
   const newLog: ApiRequestLog = {

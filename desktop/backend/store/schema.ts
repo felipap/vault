@@ -26,6 +26,7 @@ export type StoreSchema = {
     intervalMinutes: number
     nextSyncAfter: string | null
     includeAttachments: boolean
+    lastExportedMessageDate: string | null
   }
   contactsSync: {
     enabled: boolean
@@ -58,6 +59,7 @@ export const DEFAULT_STATE: StoreSchema = {
     intervalMinutes: 5,
     includeAttachments: true,
     nextSyncAfter: null,
+    lastExportedMessageDate: null,
   },
   contactsSync: {
     enabled: false,

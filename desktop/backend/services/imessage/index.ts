@@ -1,7 +1,11 @@
 import { IMessageSDK } from '@photon-ai/imessage-kit'
 import { catchAndComplain } from '../../lib/utils'
 import { createIMessageSDK, fetchMessages } from '../../sources/imessage'
-import { store } from '../../store'
+import {
+  getLastExportedMessageDate,
+  setLastExportedMessageDate,
+  store,
+} from '../../store'
 import { startAnimating } from '../../tray/animate'
 import { createScheduledService } from '../scheduler'
 import { uploadMessages } from './upload'
@@ -9,7 +13,6 @@ import { uploadMessages } from './upload'
 export { imessageBackfill } from './backfill'
 
 let sdk: IMessageSDK | null = null
-let lastExportedMessageDate: Date | null = null
 
 async function exportAndUpload(): Promise<void> {
   console.log('[imessage] Exporting messages...')
@@ -19,8 +22,10 @@ async function exportAndUpload(): Promise<void> {
   }
 
   const config = store.get('imessageExport')
-  const since =
-    lastExportedMessageDate || new Date(Date.now() - 24 * 60 * 60 * 1000)
+  const lastExported = getLastExportedMessageDate()
+  const since = lastExported
+    ? new Date(lastExported.getTime() + 1_000)
+    : new Date(Date.now() - 24 * 60 * 60 * 1000)
   const messages = await fetchMessages(sdk, since, {
     includeAttachments: config.includeAttachments,
   })
@@ -46,7 +51,7 @@ async function exportAndUpload(): Promise<void> {
     throw new Error(`uploadMessages failed: ${res.error}`)
   }
 
-  lastExportedMessageDate = new Date(latestDateStr)
+  setLastExportedMessageDate(new Date(latestDateStr))
 }
 
 export const imessageService = createScheduledService({
