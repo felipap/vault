@@ -1,3 +1,7 @@
+// Run this with:
+// `npx electron node_modules/vitest/vitest.mjs run backend/sources/whatsapp-sqlite/index.test.ts`
+// if you get sqlite3 incompatibility issues.
+
 import { describe, expect, it } from 'vitest'
 import {
   openWhatsAppDatabase,
@@ -74,15 +78,20 @@ describe('whatsapp-sqlite', () => {
         if (messages.length === 0) {
           console.log('No messages found')
         }
-        for (let i = 0; i < Math.min(4, messages.length); i++) {
+        for (let i = 0; i < Math.min(6, messages.length); i++) {
           const message = messages[i]
-          console.log(`Message N-${i}:`, {
-            id: message.id,
-            chatName: message.chatName,
-            isFromMe: message.isFromMe,
-            timestamp: message.timestamp,
-            textPreview: message.text?.slice(0, 50),
-          })
+          console.log(`Message N-${i}:`, message)
+        }
+
+        // Check if any messages have phone numbers (for contacts with LID mapping)
+        const messagesWithPhoneNumbers = messages.filter(
+          (m) => m.senderPhoneNumber !== null,
+        )
+        console.log(
+          `Messages with phone numbers: ${messagesWithPhoneNumbers.length}`,
+        )
+        if (messagesWithPhoneNumbers.length > 0) {
+          console.log('Sample message with phone:', messagesWithPhoneNumbers[0])
         }
 
         expect(Array.isArray(messages)).toBe(true)
@@ -90,6 +99,7 @@ describe('whatsapp-sqlite', () => {
           expect(messages[0]).toHaveProperty('id')
           expect(messages[0]).toHaveProperty('chatId')
           expect(messages[0]).toHaveProperty('timestamp')
+          expect(messages[0]).toHaveProperty('senderPhoneNumber')
         }
       } finally {
         db.close()
