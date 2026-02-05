@@ -9,6 +9,7 @@ import {
 
 export type DecryptedMessage = WhatsappChatMessage & {
   decryptedText: string | null
+  decryptedSenderName: string | null
 }
 
 type UseChatHistoryOptions = {
@@ -37,14 +38,26 @@ export function useChatHistory({
       const key = getEncryptionKey()
       const decrypted = await Promise.all(
         messages.map(async (msg) => {
-          if (!msg.text || !isEncrypted(msg.text)) {
-            return { ...msg, decryptedText: msg.text }
+          let decryptedText: string | null = msg.text
+          let decryptedSenderName: string | null = msg.senderName
+
+          if (key) {
+            if (msg.text && isEncrypted(msg.text)) {
+              decryptedText = await decryptText(msg.text, key)
+            }
+            if (msg.senderName && isEncrypted(msg.senderName)) {
+              decryptedSenderName = await decryptText(msg.senderName, key)
+            }
+          } else {
+            if (msg.text && isEncrypted(msg.text)) {
+              decryptedText = null
+            }
+            if (msg.senderName && isEncrypted(msg.senderName)) {
+              decryptedSenderName = null
+            }
           }
-          if (!key) {
-            return { ...msg, decryptedText: null }
-          }
-          const decryptedText = await decryptText(msg.text, key)
-          return { ...msg, decryptedText }
+
+          return { ...msg, decryptedText, decryptedSenderName }
         })
       )
       setDecryptedMessages(decrypted)

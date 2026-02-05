@@ -1,14 +1,13 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
-import { useChatList } from "./useChatList"
-import { ChatsTable } from "./ChatsTable"
 import { SearchIcon } from "@/ui/icons"
+import { useEffect, useRef, useState } from "react"
+import { ChatsTable } from "./ChatsTable"
+import { useChatList } from "./useChatList"
 
 export default function Page() {
   const {
     chats,
-    contactLookup,
     loading,
     page,
     totalPages,
@@ -40,7 +39,6 @@ export default function Page() {
       ) : (
         <ChatsTable
           chats={chats}
-          contactLookup={contactLookup}
           page={page}
           totalPages={totalPages}
           onPageChange={setPage}

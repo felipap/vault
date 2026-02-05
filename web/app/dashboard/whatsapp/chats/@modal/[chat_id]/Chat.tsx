@@ -3,23 +3,16 @@
 import { twMerge } from "tailwind-merge"
 import { LockIcon, LoaderIcon, CheckIcon } from "@/ui/icons"
 import { isEncrypted } from "@/lib/encryption"
-import { type WhatsappChatMessage, type ContactLookup } from "../../actions"
+import { type WhatsappChatMessage } from "../../actions"
 import { useChatHistory, type DecryptedMessage } from "./useChatHistory"
-import { resolveContactName } from "./utils"
 
 type Props = {
   chatId: string
   initialMessages: WhatsappChatMessage[]
   totalCount: number
-  contactLookup: ContactLookup
 }
 
-export function Chat({
-  chatId,
-  initialMessages,
-  totalCount,
-  contactLookup,
-}: Props) {
+export function Chat({ chatId, initialMessages, totalCount }: Props) {
   const { messages, isLoading, isPending, hasMore, remainingCount, loadMore } =
     useChatHistory({ chatId, initialMessages, totalCount })
 
@@ -32,13 +25,7 @@ export function Chat({
         {isLoading ? (
           <p className="text-sm text-zinc-500">Loading messages...</p>
         ) : (
-          messages.map((msg) => (
-            <MessageBubble
-              key={msg.id}
-              message={msg}
-              contactLookup={contactLookup}
-            />
-          ))
+          messages.map((msg) => <MessageBubble key={msg.id} message={msg} />)
         )}
         {hasMore ? (
           <button
@@ -66,13 +53,7 @@ export function Chat({
   )
 }
 
-function MessageBubble({
-  message,
-  contactLookup,
-}: {
-  message: DecryptedMessage
-  contactLookup: ContactLookup
-}) {
+function MessageBubble({ message }: { message: DecryptedMessage }) {
   const isEncryptedMsg = message.text ? isEncrypted(message.text) : false
   const hasDecrypted = !!message.decryptedText
 
@@ -93,8 +74,7 @@ function MessageBubble({
       >
         {!message.isFromMe && (
           <p className="mb-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
-            {message.senderName ||
-              resolveContactName(message.sender, contactLookup)}
+            {message.decryptedSenderName || message.sender}
           </p>
         )}
         <div className="flex items-start gap-1.5">

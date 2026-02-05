@@ -1,15 +1,15 @@
+// Decryption must happen client side, very important.
+
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
-import {
-  getWhatsappChats,
-  getContactLookup,
-  type WhatsappChat,
-  type ContactLookup,
-} from "./actions"
+import { getWhatsappChats, type WhatsappChat } from "./actions"
 import { decryptText, isEncrypted, getEncryptionKey } from "@/lib/encryption"
 
-export type DecryptedChat = WhatsappChat & { decryptedLastMessage: string | null }
+export type DecryptedChat = WhatsappChat & {
+  decryptedChatName: string | null
+  decryptedLastMessage: string | null
+}
 
 type UseChatListOptions = {
   pageSize?: number
@@ -19,7 +19,6 @@ export function useChatList(options: UseChatListOptions = {}) {
   const { pageSize = 20 } = options
 
   const [chats, setChats] = useState<DecryptedChat[]>([])
-  const [contactLookup, setContactLookup] = useState<ContactLookup>({})
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
@@ -31,23 +30,37 @@ export function useChatList(options: UseChatListOptions = {}) {
       const encryptionKey = getEncryptionKey()
       return Promise.all(
         rawChats.map(async (chat) => {
-          if (!chat.lastMessageText || !isEncrypted(chat.lastMessageText)) {
-            return { ...chat, decryptedLastMessage: chat.lastMessageText }
+          let decryptedChatName: string | null = chat.chatName
+          let decryptedLastMessage: string | null = chat.lastMessageText
+
+          if (encryptionKey) {
+            if (chat.chatName && isEncrypted(chat.chatName)) {
+              decryptedChatName = await decryptText(
+                chat.chatName,
+                encryptionKey
+              )
+            }
+            if (chat.lastMessageText && isEncrypted(chat.lastMessageText)) {
+              decryptedLastMessage = await decryptText(
+                chat.lastMessageText,
+                encryptionKey
+              )
+            }
+          } else {
+            if (chat.chatName && isEncrypted(chat.chatName)) {
+              decryptedChatName = null
+            }
+            if (chat.lastMessageText && isEncrypted(chat.lastMessageText)) {
+              decryptedLastMessage = null
+            }
           }
-          if (!encryptionKey) {
-            return { ...chat, decryptedLastMessage: null }
-          }
-          const decrypted = await decryptText(chat.lastMessageText, encryptionKey)
-          return { ...chat, decryptedLastMessage: decrypted }
+
+          return { ...chat, decryptedChatName, decryptedLastMessage }
         })
       )
     },
     []
   )
-
-  useEffect(() => {
-    getContactLookup().then(setContactLookup)
-  }, [])
 
   useEffect(() => {
     async function load() {
@@ -69,7 +82,6 @@ export function useChatList(options: UseChatListOptions = {}) {
 
   return {
     chats,
-    contactLookup,
     loading,
     page,
     totalPages,

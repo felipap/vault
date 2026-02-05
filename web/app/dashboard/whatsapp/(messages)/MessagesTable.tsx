@@ -12,7 +12,6 @@ import { ArrowDownIcon, ArrowUpIcon, LockIcon } from "@/ui/icons"
 import { Pagination } from "@/ui/Pagination"
 import { isEncrypted } from "@/lib/encryption"
 import { type WhatsappMessage, type SortBy } from "./actions"
-import { type ContactLookup } from "../chats/actions"
 
 export type DecryptedMessage = WhatsappMessage & {
   decryptedText: string | null
@@ -22,7 +21,6 @@ export type DecryptedMessage = WhatsappMessage & {
 
 type Props = {
   messages: DecryptedMessage[]
-  contactLookup: ContactLookup
   page: number
   totalPages: number
   onPageChange: (page: number) => void
@@ -33,7 +31,6 @@ const columnHelper = createColumnHelper<DecryptedMessage>()
 
 export function MessagesTable({
   messages,
-  contactLookup,
   page,
   totalPages,
   onPageChange,
@@ -51,7 +48,7 @@ export function MessagesTable({
         header: "Chat",
         cell: (info) => {
           const { decryptedChatName, chatId } = info.row.original
-          const displayName = decryptedChatName || formatPhone(chatId)
+          const displayName = decryptedChatName || chatId
 
           return (
             <div className="flex items-center gap-2">
@@ -71,17 +68,11 @@ export function MessagesTable({
             return <span className="text-sm text-zinc-500">You</span>
           }
 
-          const displayName = decryptedSenderName || contactLookup[sender.replace(/\D/g, "")] || formatPhone(sender)
-          const showPhone = displayName !== formatPhone(sender)
+          const displayName = decryptedSenderName || sender
 
           return (
             <div className="flex flex-col">
               <span className="text-sm">{displayName}</span>
-              {showPhone && (
-                <span className="text-xs text-zinc-500">
-                  {formatPhone(sender)}
-                </span>
-              )}
             </div>
           )
         },
@@ -96,7 +87,7 @@ export function MessagesTable({
         cell: (info) => <DateCell message={info.row.original} sortBy={sortBy} />,
       }),
     ],
-    [sortBy, contactLookup]
+    [sortBy]
   )
 
   const table = useReactTable({
@@ -243,15 +234,4 @@ function WhatsappIcon() {
       W
     </div>
   )
-}
-
-function formatPhone(phone: string): string {
-  if (phone.startsWith("+")) {
-    const digits = phone.slice(1)
-    if (digits.length === 11 && digits.startsWith("1")) {
-      return `+1 (${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}`
-    }
-    return phone
-  }
-  return phone
 }

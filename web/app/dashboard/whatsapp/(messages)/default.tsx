@@ -7,7 +7,6 @@ import { MessagesTable } from "./MessagesTable"
 export default function Page() {
   const {
     messages,
-    contactLookup,
     loading,
     page,
     totalPages,
@@ -35,7 +34,6 @@ export default function Page() {
       </div>
       <MessagesTable
         messages={messages}
-        contactLookup={contactLookup}
         page={page}
         totalPages={totalPages}
         onPageChange={setPage}

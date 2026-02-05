@@ -1,11 +1,10 @@
 "use client"
 
-import { useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { twMerge } from "tailwind-merge"
 import { LockIcon } from "@/ui/icons"
 import { Pagination } from "@/ui/Pagination"
-import { type WhatsappChat, type ContactLookup } from "./actions"
+import { ContactAvatar } from "@/ui/ContactAvatar"
+import { type WhatsappChat } from "./actions"
 import { isEncrypted } from "@/lib/encryption"
 import {
   createColumnHelper,
@@ -14,136 +13,103 @@ import {
   useReactTable,
 } from "@tanstack/react-table"
 
-export type DecryptedChat = WhatsappChat & { decryptedLastMessage: string | null }
+export type DecryptedChat = WhatsappChat & {
+  decryptedChatName: string | null
+  decryptedLastMessage: string | null
+}
 
 const columnHelper = createColumnHelper<DecryptedChat>()
 
-function createColumns(contactLookup: ContactLookup) {
-  return [
-    columnHelper.display({
-      id: "contact",
-      header: "Contact",
-      size: 300,
-      cell: ({ row }) => {
-        const chat = row.original
-        const isGroup = chat.participantCount > 2
+const columns = [
+  columnHelper.display({
+    id: "chat",
+    header: "Chat",
+    size: 300,
+    cell: ({ row }) => {
+      const chat = row.original
+      const isGroup = chat.participantCount > 2
+      const displayName = chat.decryptedChatName || chat.chatId
 
-        if (isGroup) {
-          const participantNames = chat.participants
-            .map((p) => resolveContactName(p, contactLookup))
-            .join(", ")
-
-          return (
-            <div className="flex min-w-0 items-center gap-2">
-              <ContactAvatar name="Group" isGroup={true} />
-              <div className="flex min-w-0 flex-col">
-                <span className="text-sm font-medium">
-                  Group ({chat.participantCount})
-                </span>
-                <span
-                  className="truncate text-xs text-zinc-500"
-                  title={participantNames}
-                >
-                  {participantNames}
-                </span>
-              </div>
-            </div>
-          )
-        }
-
-        const participant = chat.participants[0] || chat.chatId
-        const resolvedName = resolveContactName(participant, contactLookup)
-        const hasContactName = resolvedName !== formatPhone(participant)
-
-        return (
-          <div className="flex min-w-0 items-center gap-2">
-            <ContactAvatar name={resolvedName} isGroup={false} />
-            <div className="flex min-w-0 flex-col">
-              <span className="truncate text-sm font-medium">{resolvedName}</span>
-              {hasContactName && (
-                <span className="truncate text-xs text-zinc-500">
-                  {formatPhone(participant)}
-                </span>
-              )}
-            </div>
-          </div>
-        )
-      },
-    }),
-    columnHelper.display({
-      id: "lastMessage",
-      header: "Last Message",
-      cell: ({ row }) => {
-        const chat = row.original
-        const isChatEncrypted = isEncrypted(chat.lastMessageText)
-        const displayText = chat.decryptedLastMessage
-
-        return (
-          <div className="max-w-[200px] truncate text-sm text-zinc-600 dark:text-zinc-400">
-            {displayText ? (
-              <>
-                {chat.lastMessageFromMe && (
-                  <span className="text-zinc-400 dark:text-zinc-500">You: </span>
-                )}
-                {isChatEncrypted && (
-                  <span
-                    className="mr-0.5 inline-flex items-center text-green-500"
-                    title="Decrypted"
-                  >
-                    <LockIcon size={10} />
-                  </span>
-                )}
-                {displayText}
-              </>
-            ) : isChatEncrypted ? (
-              <span className="flex items-center gap-1 italic text-amber-500">
-                <LockIcon size={10} />
-                Encrypted
+      return (
+        <div className="flex min-w-0 items-center gap-2">
+          <ContactAvatar name={displayName} isGroup={isGroup} />
+          <div className="flex min-w-0 flex-col">
+            <span className="truncate text-sm font-medium">{displayName}</span>
+            {isGroup && (
+              <span className="text-xs text-zinc-500">
+                {chat.participantCount} participants
               </span>
-            ) : (
-              "No message"
             )}
           </div>
-        )
-      },
-    }),
-    columnHelper.accessor("lastMessageDate", {
-      header: "Date",
-      cell: (info) => {
-        const date = info.getValue()
-        return (
-          <span className="text-zinc-500">
-            {date ? formatRelativeDate(new Date(date)) : "—"}
-          </span>
-        )
-      },
-    }),
-    columnHelper.accessor("messageCount", {
-      header: "Count",
-      cell: (info) => (
-        <span className="tabular-nums">{info.getValue().toLocaleString()}</span>
-      ),
-    }),
-  ]
-}
+        </div>
+      )
+    },
+  }),
+  columnHelper.display({
+    id: "lastMessage",
+    header: "Last Message",
+    cell: ({ row }) => {
+      const chat = row.original
+      const isChatEncrypted = isEncrypted(chat.lastMessageText)
+      const displayText = chat.decryptedLastMessage
+
+      return (
+        <div className="max-w-[200px] truncate text-sm text-zinc-600 dark:text-zinc-400">
+          {displayText ? (
+            <>
+              {chat.lastMessageFromMe && (
+                <span className="text-zinc-400 dark:text-zinc-500">You: </span>
+              )}
+              {isChatEncrypted && (
+                <span
+                  className="mr-0.5 inline-flex items-center text-green-500"
+                  title="Decrypted"
+                >
+                  <LockIcon size={10} />
+                </span>
+              )}
+              {displayText}
+            </>
+          ) : isChatEncrypted ? (
+            <span className="flex items-center gap-1 italic text-amber-500">
+              <LockIcon size={10} />
+              Encrypted
+            </span>
+          ) : (
+            "No message"
+          )}
+        </div>
+      )
+    },
+  }),
+  columnHelper.accessor("lastMessageDate", {
+    header: "Date",
+    cell: (info) => {
+      const date = info.getValue()
+      return (
+        <span className="text-zinc-500">
+          {date ? formatRelativeDate(new Date(date)) : "—"}
+        </span>
+      )
+    },
+  }),
+  columnHelper.accessor("messageCount", {
+    header: "Count",
+    cell: (info) => (
+      <span className="tabular-nums">{info.getValue().toLocaleString()}</span>
+    ),
+  }),
+]
 
 type Props = {
   chats: DecryptedChat[]
-  contactLookup: ContactLookup
   page: number
   totalPages: number
   onPageChange: (page: number) => void
 }
 
-export function ChatsTable({
-  chats,
-  contactLookup,
-  page,
-  totalPages,
-  onPageChange,
-}: Props) {
+export function ChatsTable({ chats, page, totalPages, onPageChange }: Props) {
   const router = useRouter()
-  const columns = useMemo(() => createColumns(contactLookup), [contactLookup])
 
   const table = useReactTable({
     data: chats,
@@ -215,49 +181,6 @@ export function ChatsTable({
       />
     </>
   )
-}
-
-function ContactAvatar({ name, isGroup }: { name: string; isGroup: boolean }) {
-  const initial = name.charAt(0).toUpperCase()
-
-  return (
-    <div
-      className={twMerge(
-        "flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium",
-        isGroup
-          ? "bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400"
-          : "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
-      )}
-    >
-      {isGroup ? "G" : initial}
-    </div>
-  )
-}
-
-function resolveContactName(
-  contact: string,
-  contactLookup: ContactLookup
-): string {
-  // Try lookup by normalized phone number
-  const normalizedPhone = contact.replace(/\D/g, "")
-  const name = contactLookup[normalizedPhone]
-  if (name) {
-    return name
-  }
-
-  // Fall back to formatted phone
-  return formatPhone(contact)
-}
-
-function formatPhone(phone: string): string {
-  if (phone.startsWith("+")) {
-    const digits = phone.slice(1)
-    if (digits.length === 11 && digits.startsWith("1")) {
-      return `+1 (${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}`
-    }
-    return phone
-  }
-  return phone
 }
 
 function formatRelativeDate(date: Date): string {

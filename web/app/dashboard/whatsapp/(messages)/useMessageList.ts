@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback } from "react"
 import { getWhatsappMessages, type WhatsappMessage, type SortBy } from "./actions"
-import { getContactLookup, type ContactLookup } from "../chats/actions"
 import { decryptText, isEncrypted, getEncryptionKey } from "@/lib/encryption"
 
 export type DecryptedMessage = WhatsappMessage & {
@@ -20,7 +19,6 @@ export function useMessageList(options: UseMessageListOptions = {}) {
   const { pageSize = 20, initialSortBy = "timestamp" } = options
 
   const [messages, setMessages] = useState<DecryptedMessage[]>([])
-  const [contactLookup, setContactLookup] = useState<ContactLookup>({})
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
@@ -67,10 +65,6 @@ export function useMessageList(options: UseMessageListOptions = {}) {
   )
 
   useEffect(() => {
-    getContactLookup().then(setContactLookup)
-  }, [])
-
-  useEffect(() => {
     async function load() {
       setLoading(true)
       const data = await getWhatsappMessages(page, pageSize, sortBy)
@@ -90,7 +84,6 @@ export function useMessageList(options: UseMessageListOptions = {}) {
 
   return {
     messages,
-    contactLookup,
     loading,
     page,
     totalPages,

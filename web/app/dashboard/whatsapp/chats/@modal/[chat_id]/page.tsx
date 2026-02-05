@@ -1,4 +1,4 @@
-import { getWhatsappChatWithMessages, getContactLookup } from "../../actions"
+import { getWhatsappChatWithMessages } from "../../actions"
 import { notFound } from "next/navigation"
 import { ChatDrawer } from "./ChatDrawer"
 
@@ -9,14 +9,11 @@ type Props = {
 export default async function Page({ params }: Props) {
   const { chat_id } = await params
   const decodedChatId = decodeURIComponent(chat_id)
-  const [chat, contactLookup] = await Promise.all([
-    getWhatsappChatWithMessages(decodedChatId),
-    getContactLookup(),
-  ])
+  const chat = await getWhatsappChatWithMessages(decodedChatId)
 
   if (!chat) {
     notFound()
   }
 
-  return <ChatDrawer chat={chat} contactLookup={contactLookup} />
+  return <ChatDrawer chat={chat} />
 }

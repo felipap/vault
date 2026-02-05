@@ -2,12 +2,13 @@
 
 import { isAuthenticated } from "@/lib/admin-auth"
 import { db } from "@/db"
-import { Contacts, DEFAULT_USER_ID } from "@/db/schema"
-import { eq, sql } from "drizzle-orm"
+import { DEFAULT_USER_ID } from "@/db/schema"
+import { sql } from "drizzle-orm"
 import { unauthorized } from "next/navigation"
 
 export type WhatsappChat = {
   chatId: string
+  chatName: string | null
   lastMessageText: string | null
   lastMessageDate: Date | null
   lastMessageFromMe: boolean
@@ -48,6 +49,7 @@ export async function getWhatsappChats(
 
   const result = await db.execute<{
     chat_id: string
+    chat_name: string | null
     text: string | null
     timestamp: Date | null
     is_from_me: number
@@ -58,6 +60,7 @@ export async function getWhatsappChats(
     WITH ranked_messages AS (
       SELECT
         chat_id,
+        chat_name,
         id,
         text,
         timestamp,
@@ -88,6 +91,7 @@ export async function getWhatsappChats(
     )
     SELECT
       rm.chat_id,
+      rm.chat_name,
       rm.text,
       rm.timestamp,
       rm.is_from_me,
@@ -106,6 +110,7 @@ export async function getWhatsappChats(
   return {
     chats: [...result].map((row) => ({
       chatId: row.chat_id,
+      chatName: row.chat_name,
       lastMessageText: row.text,
       lastMessageDate: row.timestamp,
       lastMessageFromMe: row.is_from_me === 1,
@@ -118,49 +123,6 @@ export async function getWhatsappChats(
     pageSize,
     totalPages: Math.ceil(total / pageSize),
   }
-}
-
-export type ContactLookup = Record<string, string>
-
-export async function getContactLookup(): Promise<ContactLookup> {
-  if (!(await isAuthenticated())) {
-    unauthorized()
-  }
-
-  const contacts = await db.query.Contacts.findMany({
-    where: eq(Contacts.userId, DEFAULT_USER_ID),
-  })
-
-  const lookup: ContactLookup = {}
-
-  for (const contact of contacts) {
-    const name = [contact.firstName, contact.lastName]
-      .filter(Boolean)
-      .join(" ")
-      .trim()
-
-    if (!name) {
-      continue
-    }
-
-    let phoneNumbers: string[] = []
-
-    try {
-      phoneNumbers = JSON.parse(contact.phoneNumbers)
-    } catch {
-      // ignore parse errors
-    }
-
-    // Map phone numbers to contact name (normalized)
-    for (const phone of phoneNumbers) {
-      const normalizedPhone = phone.replace(/\D/g, "")
-      if (normalizedPhone) {
-        lookup[normalizedPhone] = name
-      }
-    }
-  }
-
-  return lookup
 }
 
 export type WhatsappChatMessage = {
@@ -192,6 +154,7 @@ export async function getWhatsappChatWithMessages(
   // First get the chat info
   const chatResult = await db.execute<{
     chat_id: string
+    chat_name: string | null
     text: string | null
     timestamp: Date | null
     is_from_me: number
@@ -202,6 +165,7 @@ export async function getWhatsappChatWithMessages(
     WITH ranked_messages AS (
       SELECT
         chat_id,
+        chat_name,
         text,
         timestamp,
         is_from_me,
@@ -224,6 +188,7 @@ export async function getWhatsappChatWithMessages(
     )
     SELECT
       rm.chat_id,
+      rm.chat_name,
       rm.text,
       rm.timestamp,
       rm.is_from_me,
@@ -267,6 +232,7 @@ export async function getWhatsappChatWithMessages(
 
   return {
     chatId: chatRow.chat_id,
+    chatName: chatRow.chat_name,
     lastMessageText: chatRow.text,
     lastMessageDate: chatRow.timestamp,
     lastMessageFromMe: chatRow.is_from_me === 1,
