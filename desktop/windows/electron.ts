@@ -7,6 +7,8 @@ export type {
   BackfillProgress,
   ElectronAPI,
   UnipileWhatsappConfig,
+  McpServerConfig,
+  McpServerStatus,
 } from '../shared-types'
 
 import type { ElectronAPI } from '../shared-types'

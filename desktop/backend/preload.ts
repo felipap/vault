@@ -78,6 +78,14 @@ const api = {
   setOpenAtLogin: (enabled: boolean) =>
     ipcRenderer.invoke('set-open-at-login', enabled),
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
+
+  // MCP Server
+  getMcpServerConfig: () => ipcRenderer.invoke('get-mcp-server-config'),
+  setMcpServerConfig: (config: { enabled?: boolean; port?: number }) =>
+    ipcRenderer.invoke('set-mcp-server-config', config),
+  getMcpServerStatus: () => ipcRenderer.invoke('get-mcp-server-status'),
+  startMcpServer: () => ipcRenderer.invoke('start-mcp-server'),
+  stopMcpServer: () => ipcRenderer.invoke('stop-mcp-server'),
 } satisfies ElectronAPI
 
 contextBridge.exposeInMainWorld('electron', api)

@@ -20,6 +20,10 @@ export type StoreSchema = {
   deviceSecret: string | null
   encryptionKey: string | null
   serverUrl: string | null
+  mcpServer: {
+    enabled: boolean
+    port: number
+  }
   screenCapture: {
     enabled: boolean
     intervalMinutes: number
@@ -53,6 +57,10 @@ export const DEFAULT_STATE: StoreSchema = {
   deviceSecret: null,
   encryptionKey: null,
   serverUrl: null,
+  mcpServer: {
+    enabled: false,
+    port: 19513,
+  },
   screenCapture: {
     enabled: false,
     intervalMinutes: 5,

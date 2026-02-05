@@ -8,6 +8,7 @@ import {
 } from 'electron'
 import path from 'path'
 import { SERVICES, Service } from '../services'
+import { getMcpServerPort, startMcpServer, stopMcpServer } from '../local-mcp'
 import { getEncryptionKey, store } from '../store'
 import { showMainWindow } from '../windows/settings'
 
@@ -128,8 +129,33 @@ function updateTrayMenu(): void {
   const encryptionKey = getEncryptionKey()
   const canOpenDashboard = Boolean(serverUrl && encryptionKey)
 
+  const mcpConfig = store.get('mcpServer')
+  const mcpPort = getMcpServerPort()
+  const mcpRunning = mcpPort !== null
+
   const contextMenu = Menu.buildFromTemplate([
     ...serviceMenuItems,
+    { type: 'separator' },
+    {
+      label: mcpRunning
+        ? `MCP Server (port ${mcpPort})`
+        : 'MCP Server (stopped)',
+      submenu: [
+        {
+          label: mcpConfig.enabled ? 'Disable' : 'Enable',
+          click: async () => {
+            const newEnabled = !mcpConfig.enabled
+            store.set('mcpServer', { ...mcpConfig, enabled: newEnabled })
+            if (newEnabled) {
+              await startMcpServer(mcpConfig.port)
+            } else {
+              stopMcpServer()
+            }
+            updateTrayMenu()
+          },
+        },
+      ],
+    },
     { type: 'separator' },
     {
       label: 'Open Dashboard',

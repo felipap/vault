@@ -2,11 +2,13 @@ import { useEffect, useState, useMemo } from 'react'
 import { GeneralSettings } from './GeneralSettings'
 import { DataSourceSettings } from './DataSourceSettings'
 import { LogsTab } from './log-viewer/LogsTab'
+import { McpServerTab } from './mcp/McpServerTab'
 import { SyncLog, SyncLogSource, ServiceConfig } from '../electron'
 
 type SidebarItem =
   | { type: 'general' }
   | { type: 'logs' }
+  | { type: 'mcp' }
   | { type: 'source'; source: SyncLogSource }
 
 type DataSourceInfo = {
@@ -230,6 +232,12 @@ export function Settings() {
           >
             All Logs
           </SidebarButton>
+          <SidebarButton
+            active={activeItem.type === 'mcp'}
+            onClick={() => handleSelectItem({ type: 'mcp' })}
+          >
+            MCP Server
+          </SidebarButton>
         </div>
 
         <div className="border-t my-2" />
@@ -289,6 +297,7 @@ export function Settings() {
         {activeItem.type === 'logs' && (
           <LogsTab highlightSyncId={highlightSyncId} />
         )}
+        {activeItem.type === 'mcp' && <McpServerTab />}
         {activeItem.type === 'source' && (
           <DataSourceSettings
             source={activeItem.source}

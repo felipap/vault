@@ -4,6 +4,7 @@ import * as os from 'os'
 import * as path from 'path'
 import { SERVICES, getService } from './services'
 import { imessageBackfill } from './services/imessage'
+import { getMcpServerPort, startMcpServer, stopMcpServer } from './local-mcp'
 import {
   store,
   getSyncLogs,
@@ -188,5 +189,45 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('get-app-version', () => {
     return app.getVersion()
+  })
+
+  // MCP Server
+  ipcMain.handle('get-mcp-server-config', () => {
+    return store.get('mcpServer')
+  })
+
+  ipcMain.handle(
+    'set-mcp-server-config',
+    async (_event, config: { enabled?: boolean; port?: number }) => {
+      const current = store.get('mcpServer')
+      const updated = { ...current, ...config }
+      store.set('mcpServer', updated)
+
+      // Start or stop based on enabled state
+      if (config.enabled !== undefined) {
+        if (config.enabled) {
+          await startMcpServer(updated.port)
+        } else {
+          stopMcpServer()
+        }
+      }
+    },
+  )
+
+  ipcMain.handle('get-mcp-server-status', () => {
+    const port = getMcpServerPort()
+    return {
+      running: port !== null,
+      port,
+    }
+  })
+
+  ipcMain.handle('start-mcp-server', async () => {
+    const config = store.get('mcpServer')
+    return await startMcpServer(config.port)
+  })
+
+  ipcMain.handle('stop-mcp-server', () => {
+    stopMcpServer()
   })
 }

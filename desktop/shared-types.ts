@@ -44,6 +44,16 @@ export interface BackfillProgress {
   error?: string
 }
 
+export interface McpServerConfig {
+  enabled: boolean
+  port: number
+}
+
+export interface McpServerStatus {
+  running: boolean
+  port: number | null
+}
+
 export interface ElectronAPI {
   platform: string
 
@@ -99,4 +109,11 @@ export interface ElectronAPI {
   getOpenAtLogin: () => Promise<boolean>
   setOpenAtLogin: (enabled: boolean) => Promise<void>
   getAppVersion: () => Promise<string>
+
+  // MCP Server
+  getMcpServerConfig: () => Promise<McpServerConfig>
+  setMcpServerConfig: (config: Partial<McpServerConfig>) => Promise<void>
+  getMcpServerStatus: () => Promise<McpServerStatus>
+  startMcpServer: () => Promise<number>
+  stopMcpServer: () => Promise<void>
 }
