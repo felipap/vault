@@ -1,6 +1,7 @@
 import { db } from "@/db"
 import { DEFAULT_USER_ID, WhatsappMessages } from "@/db/schema"
 import { logRead, logWrite } from "@/lib/activity-log"
+import { WHATSAPP_ENCRYPTED_COLUMNS } from "@/lib/encryption-schema"
 import { and, eq, gte } from "drizzle-orm"
 import { NextRequest } from "next/server"
 import { z } from "zod"
@@ -46,20 +47,13 @@ const PostSchema = z.object({
 const MAX_LIMIT = 50
 
 export async function GET(request: NextRequest) {
-  console.log("GET /api/whatsapp-messages")
+  console.log("GET /api/whatsapp/messages")
 
   const { searchParams } = new URL(request.url)
-  const limitParam = searchParams.get("limit")
+  const limitParam = searchParams.get("limit") || "20"
   const offsetParam = searchParams.get("offset")
   const afterParam = searchParams.get("after")
   const chatIdParam = searchParams.get("chatId")
-
-  if (!limitParam) {
-    return Response.json(
-      { error: "limit query parameter is required" },
-      { status: 400 }
-    )
-  }
 
   const limit = parseInt(limitParam, 10)
   const offset = offsetParam ? parseInt(offsetParam, 10) : 0
@@ -133,7 +127,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  console.log("POST /api/whatsapp-messages")
+  console.log("POST /api/whatsapp/messages")
 
   const json = await request.json()
 
@@ -181,6 +175,7 @@ export async function POST(request: NextRequest) {
         skippedCount,
         rejectedCount: rejectedMessages.length,
         encrypted: true,
+        encryptedColumns: WHATSAPP_ENCRYPTED_COLUMNS,
       },
     })
   }
@@ -205,6 +200,24 @@ function formatZodError(error: z.ZodError): string {
     .join("; ")
 }
 
+function truncateForLog(obj: unknown): unknown {
+  if (typeof obj !== "object" || obj === null) {
+    return obj
+  }
+
+  const result: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(obj)) {
+    if (key === "dataBase64" && typeof value === "string") {
+      result[key] = `[base64 ${value.length} chars]`
+    } else if (key === "attachments" && Array.isArray(value)) {
+      result[key] = value.map((att) => truncateForLog(att))
+    } else {
+      result[key] = value
+    }
+  }
+  return result
+}
+
 function validateMessages(messages: unknown[]) {
   const validMessages: ValidatedMessage[] = []
   const rejectedMessages: Array<{
@@ -222,7 +235,7 @@ function validateMessages(messages: unknown[]) {
       rejectedMessages.push({ index: i, message, error })
       console.warn(
         `Rejected WhatsApp message at index ${i}:`,
-        JSON.stringify({ error })
+        JSON.stringify({ message: truncateForLog(message), error }, null, 2)
       )
       continue
     }
