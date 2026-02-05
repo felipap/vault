@@ -8,6 +8,54 @@ import { initTray, destroyTray } from './tray'
 import { startAllServices, stopAllServices } from './services'
 import { registerIpcHandlers } from './ipc'
 import { getDeviceSecret, store } from './store'
+import { appendFileSync } from 'fs'
+import { homedir } from 'os'
+import { join } from 'path'
+
+console.log(
+  'App version:',
+  app.isPackaged ? app.getVersion() : 'dev - not available',
+)
+
+//
+//
+//
+//
+//
+
+// Wake test heartbeat logger - writes every second to ~/contexter-wake-test.log
+const WAKE_TEST_LOG = join(
+  homedir(),
+  app.isPackaged ? 'contexter-wake.log' : 'contexter-wake-test.log',
+)
+let heartbeatInterval: NodeJS.Timeout | null = null
+
+function formatTimestamp() {
+  const d = new Date()
+  const pad = (n: number) => n.toString().padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+}
+
+function startHeartbeat() {
+  const log = (msg: string) => {
+    const line = `${formatTimestamp()} | ${msg}\n`
+    appendFileSync(WAKE_TEST_LOG, line)
+  }
+
+  log('=== APP STARTED ===')
+
+  heartbeatInterval = setInterval(() => {
+    log('heartbeat')
+  }, 1000)
+}
+
+function stopHeartbeat() {
+  if (heartbeatInterval) {
+    clearInterval(heartbeatInterval)
+    const line = `${formatTimestamp()} | === APP STOPPED ===\n`
+    appendFileSync(WAKE_TEST_LOG, line)
+  }
+}
 
 app.setAboutPanelOptions({
   applicationName: `Contexter ${app.isPackaged ? '' : '(dev)'}`,
@@ -71,6 +119,9 @@ app.whenReady().then(async () => {
 
   await startAllServices()
 
+  // Start wake test heartbeat logger
+  startHeartbeat()
+
   console.log('App initialized')
 
   // app.on('activate', () => {
@@ -101,6 +152,7 @@ app.on('activate', () => {
 })
 
 app.on('before-quit', () => {
+  stopHeartbeat()
   stopAllServices()
   destroyTray()
 })
