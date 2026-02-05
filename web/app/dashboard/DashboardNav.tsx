@@ -17,6 +17,7 @@ const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview" },
   { href: "/dashboard/screenshots", label: "Screenshots" },
   { href: "/dashboard/imessages", label: "iMessages" },
+  { href: "/dashboard/whatsapp", label: "WhatsApp" },
   { href: "/dashboard/contacts", label: "Contacts" },
   { href: "/dashboard/locations", label: "Locations" },
 ]
