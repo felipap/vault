@@ -11,6 +11,7 @@ export type Service = {
   getNextRunTime: () => Date | null
   getTimeUntilNextRun: () => number
   getLastSyncStatus: () => SyncStatus
+  getLastFailedSyncId: () => string | null
 }
 
 import { screenshotsService } from './screenshots'

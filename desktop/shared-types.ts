@@ -1,12 +1,16 @@
-export interface ApiRequestLog {
+export type SyncLogSource =
+  | 'screenshots'
+  | 'imessage'
+  | 'contacts'
+  | 'unipile-whatsapp'
+
+export interface SyncLog {
   id: string
   timestamp: number
-  method: string
-  url: string
-  isError: boolean
-  status?: number
+  source: SyncLogSource
+  status: 'success' | 'error'
+  errorMessage?: string
   duration: number
-  text?: string
 }
 
 export interface ServiceConfig {
@@ -43,9 +47,9 @@ export interface BackfillProgress {
 export interface ElectronAPI {
   platform: string
 
-  // Request logs
-  getRequestLogs: () => Promise<ApiRequestLog[]>
-  clearRequestLogs: () => Promise<void>
+  // Sync logs
+  getSyncLogs: () => Promise<SyncLog[]>
+  clearSyncLogs: () => Promise<void>
 
   // Server connection
   getServerUrl: () => Promise<string | null>

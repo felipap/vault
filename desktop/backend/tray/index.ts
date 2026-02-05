@@ -8,8 +8,7 @@ import {
 } from 'electron'
 import path from 'path'
 import { SERVICES, Service } from '../services'
-import { getEncryptionKey } from '../store'
-import { store } from '../store'
+import { getEncryptionKey, store } from '../store'
 import { showMainWindow } from '../windows/settings'
 
 let tray: Tray | null = null
@@ -94,9 +93,15 @@ function updateTrayMenu(): void {
     ]
 
     if (lastSyncStatus === 'error') {
+      const lastFailedSyncId = service.getLastFailedSyncId()
       items.push({
         label: '  ⚠️ Last sync failed',
-        enabled: false,
+        click: () => {
+          showMainWindow({
+            tab: 'logs',
+            highlightSyncId: lastFailedSyncId ?? undefined,
+          })
+        },
       })
     }
 
@@ -140,7 +145,7 @@ function updateTrayMenu(): void {
     {
       label: 'Settings',
       accelerator: 'CmdOrCtrl+,',
-      click: showMainWindow,
+      click: () => showMainWindow(),
     },
     { type: 'separator' },
     {

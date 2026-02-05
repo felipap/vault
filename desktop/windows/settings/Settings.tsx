@@ -1,8 +1,22 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { MainTab } from './main/MainTab'
 import { LogsTab } from './log-viewer/LogsTab'
 
 type Tab = 'general' | 'logs'
+
+function getInitialTab(): Tab {
+  const params = new URLSearchParams(window.location.search)
+  const tab = params.get('tab')
+  if (tab === 'logs' || tab === 'general') {
+    return tab
+  }
+  return 'general'
+}
+
+function getHighlightSyncId(): string | null {
+  const params = new URLSearchParams(window.location.search)
+  return params.get('highlightSyncId')
+}
 
 function TabButton({
   active,
@@ -28,7 +42,39 @@ function TabButton({
 }
 
 export function Settings() {
-  const [activeTab, setActiveTab] = useState<Tab>('general')
+  const [activeTab, setActiveTab] = useState<Tab>(getInitialTab)
+  const [highlightSyncId, setHighlightSyncId] = useState<string | null>(
+    getHighlightSyncId,
+  )
+
+  // Update state when URL changes (e.g., from tray click)
+  useEffect(() => {
+    function handleLocationChange() {
+      setActiveTab(getInitialTab())
+      setHighlightSyncId(getHighlightSyncId())
+    }
+
+    // Listen for popstate events (back/forward navigation)
+    window.addEventListener('popstate', handleLocationChange)
+
+    return () => {
+      window.removeEventListener('popstate', handleLocationChange)
+    }
+  }, [])
+
+  // Clear highlight after a delay
+  useEffect(() => {
+    if (highlightSyncId) {
+      const timeout = setTimeout(() => {
+        setHighlightSyncId(null)
+        // Clear the URL parameter
+        const url = new URL(window.location.href)
+        url.searchParams.delete('highlightSyncId')
+        window.history.replaceState({}, '', url.toString())
+      }, 3000)
+      return () => clearTimeout(timeout)
+    }
+  }, [highlightSyncId])
 
   return (
     <div className="h-screen flex flex-col bg-[var(--background-color-one)]">
@@ -51,7 +97,7 @@ export function Settings() {
 
       <div className="flex-1 overflow-auto p-4">
         {activeTab === 'general' && <MainTab />}
-        {activeTab === 'logs' && <LogsTab />}
+        {activeTab === 'logs' && <LogsTab highlightSyncId={highlightSyncId} />}
       </div>
     </div>
   )

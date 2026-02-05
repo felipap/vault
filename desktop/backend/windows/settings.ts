@@ -12,7 +12,24 @@ function showDock(): void {
   }
 }
 
-export function createSettingsWindow(): BrowserWindow {
+type WindowOptions = {
+  tab?: 'general' | 'logs'
+  highlightSyncId?: string
+}
+
+function buildQueryString(options: WindowOptions): string {
+  const params = new URLSearchParams()
+  if (options.tab) {
+    params.set('tab', options.tab)
+  }
+  if (options.highlightSyncId) {
+    params.set('highlightSyncId', options.highlightSyncId)
+  }
+  const qs = params.toString()
+  return qs ? `?${qs}` : ''
+}
+
+export function createSettingsWindow(options: WindowOptions = {}): BrowserWindow {
   showDock()
 
   const iconPath = findIconPath()
@@ -36,8 +53,10 @@ export function createSettingsWindow(): BrowserWindow {
     settingsWindow.setIcon(iconPath)
   }
 
+  const queryString = buildQueryString(options)
+
   if (isDev) {
-    settingsWindow.loadURL('http://localhost:4001')
+    settingsWindow.loadURL(`http://localhost:4001${queryString}`)
     // mainWindow.webContents.openDevTools()
   } else {
     const settingsPath = path.join(
@@ -48,7 +67,9 @@ export function createSettingsWindow(): BrowserWindow {
       'settings',
       'index.html',
     )
-    settingsWindow.loadFile(settingsPath)
+    settingsWindow.loadFile(settingsPath, {
+      search: queryString.slice(1), // Remove the leading '?'
+    })
   }
 
   // Clean up reference when window is closed
@@ -66,11 +87,28 @@ export function getMainWindow(): BrowserWindow | null {
   return settingsWindow
 }
 
-export function showMainWindow(): void {
+export function showMainWindow(options: WindowOptions = {}): void {
   if (settingsWindow) {
+    // If window exists, navigate to the new URL with params
+    const queryString = buildQueryString(options)
+    if (isDev) {
+      settingsWindow.loadURL(`http://localhost:4001${queryString}`)
+    } else {
+      const settingsPath = path.join(
+        __dirname,
+        '..',
+        '..',
+        'windows',
+        'settings',
+        'index.html',
+      )
+      settingsWindow.loadFile(settingsPath, {
+        search: queryString.slice(1),
+      })
+    }
     settingsWindow.show()
     settingsWindow.focus()
   } else {
-    createSettingsWindow()
+    createSettingsWindow(options)
   }
 }

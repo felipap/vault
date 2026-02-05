@@ -6,8 +6,8 @@ import { SERVICES, getService } from './services'
 import { imessageBackfill } from './services/imessage'
 import {
   store,
-  getRequestLogs,
-  clearRequestLogs,
+  getSyncLogs,
+  clearSyncLogs,
   getDeviceId,
   getDeviceSecret,
   setDeviceSecret,
@@ -16,12 +16,12 @@ import {
 } from './store'
 
 export function registerIpcHandlers(): void {
-  ipcMain.handle('get-request-logs', () => {
-    return getRequestLogs()
+  ipcMain.handle('get-sync-logs', () => {
+    return getSyncLogs()
   })
 
-  ipcMain.handle('clear-request-logs', () => {
-    clearRequestLogs()
+  ipcMain.handle('clear-sync-logs', () => {
+    clearSyncLogs()
   })
 
   ipcMain.handle('get-screen-capture-config', () => {

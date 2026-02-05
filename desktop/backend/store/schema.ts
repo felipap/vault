@@ -1,14 +1,18 @@
 import { randomUUID } from 'crypto'
 
-export type ApiRequestLog = {
+export type SyncLogSource =
+  | 'screenshots'
+  | 'imessage'
+  | 'contacts'
+  | 'unipile-whatsapp'
+
+export type SyncLog = {
   id: string
   timestamp: number
-  method: string
-  url: string
-  isError: boolean
-  status?: number
+  source: SyncLogSource
+  status: 'success' | 'error'
+  errorMessage?: string
   duration: number
-  text?: string
 }
 
 export type StoreSchema = {
@@ -41,7 +45,7 @@ export type StoreSchema = {
     apiToken: string | null
     accountId: string | null
   }
-  requestLogs: ApiRequestLog[]
+  syncLogs: SyncLog[]
 }
 
 export const DEFAULT_STATE: StoreSchema = {
@@ -74,5 +78,5 @@ export const DEFAULT_STATE: StoreSchema = {
     apiToken: null,
     accountId: null,
   },
-  requestLogs: [],
+  syncLogs: [],
 }

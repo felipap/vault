@@ -1,6 +1,6 @@
 // Utilities for talking to the user's context server.
 
-import { addRequestLog, getDeviceId, getDeviceSecret, store } from '../store'
+import { getDeviceId, getDeviceSecret, store } from '../store'
 
 type ApiMethod = 'GET' | 'POST' | 'PUT' | 'DELETE'
 
@@ -44,7 +44,6 @@ export async function apiRequest<T = unknown>({
   }
 
   const url = `${getBaseUrl()}${path}`
-  const startTime = Date.now()
 
   let response: Response
   try {
@@ -59,18 +58,8 @@ export async function apiRequest<T = unknown>({
   } catch (error) {
     console.log(`url: ${url}`)
     const message = error instanceof Error ? error.message : 'Network error'
-    addRequestLog({
-      timestamp: startTime,
-      method,
-      url,
-      isError: true,
-      duration: Date.now() - startTime,
-      text: message,
-    })
     return { error: message, errorStatus: 0 }
   }
-
-  const duration = Date.now() - startTime
 
   if (!response.ok) {
     const text = await response.text()
@@ -82,27 +71,8 @@ export async function apiRequest<T = unknown>({
       'status:',
       response.status,
     )
-    addRequestLog({
-      timestamp: startTime,
-      method,
-      url,
-      isError: true,
-      status: response.status,
-      duration,
-      text: text.slice(0, 500),
-    })
-
     return { error: text, errorStatus: response.status }
   }
-
-  addRequestLog({
-    timestamp: startTime,
-    method,
-    url,
-    isError: false,
-    status: response.status,
-    duration,
-  })
 
   const text = await response.text()
 
@@ -130,7 +100,6 @@ export async function apiFormDataRequest<T = unknown>({
   }
 
   const url = `${baseUrl}${path}`
-  const startTime = Date.now()
 
   let response: Response
   try {
@@ -141,41 +110,13 @@ export async function apiFormDataRequest<T = unknown>({
     })
   } catch (error) {
     console.log(`url: ${url}`)
-    addRequestLog({
-      timestamp: startTime,
-      method: 'POST',
-      url,
-      isError: true,
-      duration: Date.now() - startTime,
-      text: error instanceof Error ? error.message : 'Network error',
-    })
     throw error
   }
 
-  const duration = Date.now() - startTime
-
   if (!response.ok) {
     const text = await response.text()
-    addRequestLog({
-      timestamp: startTime,
-      method: 'POST',
-      url,
-      isError: true,
-      status: response.status,
-      duration,
-      text: text.slice(0, 500),
-    })
-    throw new Error(`Request failed: ${response.status} ${response.statusText}`)
+    throw new Error(`Request failed: ${response.status} ${response.statusText}: ${text}`)
   }
-
-  addRequestLog({
-    timestamp: startTime,
-    method: 'POST',
-    url,
-    isError: false,
-    status: response.status,
-    duration,
-  })
 
   const contentType = response.headers.get('content-type')
   if (contentType?.includes('application/json')) {

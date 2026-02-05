@@ -1,5 +1,6 @@
 import { createLogger } from '../lib/logger'
-import { getEncryptionKey, store } from '../store'
+import { addSyncLog, getEncryptionKey, store } from '../store'
+import type { SyncLogSource } from '../store/schema'
 import type { SyncStatus, Service } from './index'
 
 type ConfigKey =
@@ -16,7 +17,7 @@ class MissingEncryptionKeyError extends Error {
 }
 
 type SchedulerOptions = {
-  name: string
+  name: SyncLogSource
   configKey: ConfigKey
   onSync: () => Promise<void>
   onStart?: () => void
@@ -30,19 +31,35 @@ export function createScheduledService(options: SchedulerOptions): Service {
   let interval: NodeJS.Timeout | null = null
   let nextRunTime: Date | null = null
   let lastSyncStatus: SyncStatus = null
+  let lastFailedSyncId: string | null = null
 
   async function runSync(): Promise<void> {
+    const startTime = Date.now()
+
     // Check for encryption key before syncing
     const encryptionKey = getEncryptionKey()
     if (!encryptionKey) {
       log.info('Skipping sync: encryption key not set')
       lastSyncStatus = 'error'
+      lastFailedSyncId = addSyncLog({
+        timestamp: startTime,
+        source: name,
+        status: 'error',
+        errorMessage: 'Encryption key not set',
+        duration: Date.now() - startTime,
+      })
       return
     }
 
     try {
       await onSync()
       lastSyncStatus = 'success'
+      addSyncLog({
+        timestamp: startTime,
+        source: name,
+        status: 'success',
+        duration: Date.now() - startTime,
+      })
     } catch (error) {
       const isConnectionError =
         error instanceof TypeError &&
@@ -50,12 +67,26 @@ export function createScheduledService(options: SchedulerOptions): Service {
         error.cause &&
         (error.cause as { code?: string }).code === 'ECONNREFUSED'
 
+      let errorMessage: string
       if (isConnectionError) {
+        errorMessage = 'Could not connect to server'
         log.error('Sync failed: Could not connect to server')
+      } else if (error instanceof Error) {
+        errorMessage = error.message
+        log.error('Sync failed:', error)
       } else {
+        errorMessage = String(error)
         log.error('Sync failed:', error)
       }
+
       lastSyncStatus = 'error'
+      lastFailedSyncId = addSyncLog({
+        timestamp: startTime,
+        source: name,
+        status: 'error',
+        errorMessage,
+        duration: Date.now() - startTime,
+      })
     }
   }
 
@@ -173,6 +204,10 @@ export function createScheduledService(options: SchedulerOptions): Service {
     return lastSyncStatus
   }
 
+  function getLastFailedSyncId(): string | null {
+    return lastFailedSyncId
+  }
+
   return {
     name,
     start,
@@ -184,6 +219,7 @@ export function createScheduledService(options: SchedulerOptions): Service {
     getNextRunTime,
     getTimeUntilNextRun,
     getLastSyncStatus,
+    getLastFailedSyncId,
   }
 }
 

@@ -1,5 +1,6 @@
 export type {
-  ApiRequestLog,
+  SyncLog,
+  SyncLogSource,
   ServiceConfig,
   IMessageExportConfig,
   ServiceStatus,

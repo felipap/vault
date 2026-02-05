@@ -26,7 +26,7 @@
     "start": "electron .",
     "generate-icons": "bash scripts/generate-icons.sh",
     "release": "standard-version",
-    "postinstall": "electron-builder install-app-deps && electron-rebuild -f -w better-sqlite3,sharp",
+    "postinstall": "electron-rebuild -f -w better-sqlite3,sharp",
     "ts-check": "npm run ts-check-windows && npm run ts-check-backend",
     "ts-check-windows": "tsc -p windows/tsconfig.json --noEmit",
     "ts-check-backend": "tsc -p tsconfig.backend.json --noEmit",
@@ -51,7 +51,6 @@
     "@typescript-eslint/parser": "^5.62.0",
     "@vitejs/plugin-react": "^4.2.1",
     "concurrently": "^9.1.0",
-    "electron": "^39.2.7",
     "electron-builder": "^26.0.12",
     "eslint": "^8.57.1",
     "eslint-plugin-import": "^2.32.0",
@@ -61,6 +60,8 @@
     "vite": "^5.4.21"
   },
   "dependencies": {
+    "electron": "^39.2.7",
+    "electron-rebuild": "^3.2.9",
     "@photon-ai/imessage-kit": "^2.1.0",
     "@tailwindcss/forms": "^0.5.11",
     "@tailwindcss/postcss": "^4.1.18",

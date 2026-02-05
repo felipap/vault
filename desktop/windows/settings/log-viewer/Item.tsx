@@ -1,4 +1,5 @@
-import { ApiRequestLog } from '../../electron'
+import { forwardRef, useState } from 'react'
+import { SyncLog, SyncLogSource } from '../../electron'
 
 function formatTimestamp(timestamp: number): string {
   const date = new Date(timestamp)
@@ -18,56 +19,92 @@ export function formatDate(timestamp: number): string {
   })
 }
 
-function StatusBadge({ isError, status }: { isError: boolean; status?: number }) {
-  if (isError) {
+const SOURCE_LABELS: Record<SyncLogSource, string> = {
+  screenshots: 'Screenshots',
+  imessage: 'iMessage',
+  contacts: 'Contacts',
+  'unipile-whatsapp': 'WhatsApp',
+}
+
+function StatusBadge({ status }: { status: 'success' | 'error' }) {
+  if (status === 'error') {
     return (
       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">
-        {status ?? 'Error'}
+        Failed
       </span>
     )
   }
   return (
     <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
-      {status ?? 'OK'}
+      Success
     </span>
   )
 }
 
 type Props = {
-  log: ApiRequestLog
+  log: SyncLog
   showDate: boolean
+  highlighted?: boolean
 }
 
-export function LogItem({ log, showDate }: Props) {
-  return (
-    <tr className="border-b border-[var(--border-color-one)] hover:bg-[var(--background-color-three)]">
-      <td className="py-2.5 font-mono text-xs">
-        {showDate && (
-          <span className="text-[var(--text-color-secondary)] mr-1.5">
-            {formatDate(log.timestamp)}
-          </span>
-        )}
-        {formatTimestamp(log.timestamp)}
-      </td>
-      <td className="py-2.5">
-        <span className="font-mono text-xs px-1.5 py-0.5 rounded bg-[var(--background-color-three)]">
-          {log.method}
-        </span>
-      </td>
-      <td className="py-2.5 font-mono text-xs text-[var(--text-color-secondary)]">
-        {log.url}
-      </td>
-      <td className="py-2.5">
-        <StatusBadge isError={log.isError} status={log.status} />
-        {log.text && (
-          <span className="ml-2 text-xs text-red-500 dark:text-red-400">
-            {log.text}
-          </span>
-        )}
-      </td>
-      <td className="py-2.5 text-right font-mono text-xs text-[var(--text-color-secondary)]">
-        {log.duration}ms
-      </td>
-    </tr>
+export const SyncLogItem = forwardRef<HTMLTableRowElement, Props>(
+  function SyncLogItem({ log, showDate, highlighted }, ref) {
+    const [expanded, setExpanded] = useState(highlighted ?? false)
+
+    return (
+      <>
+        <tr
+          ref={ref}
+        onClick={() => setExpanded(!expanded)}
+        className={`border-b border-[var(--border-color-one)] hover:bg-[var(--background-color-three)] cursor-pointer ${
+          highlighted ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+        }`}
+      >
+        <td className="py-2.5 font-mono text-xs">
+          {showDate && (
+            <span className="text-[var(--text-color-secondary)] mr-1.5">
+              {formatDate(log.timestamp)}
+            </span>
+          )}
+          {formatTimestamp(log.timestamp)}
+        </td>
+        <td className="py-2.5">{SOURCE_LABELS[log.source]}</td>
+        <td className="py-2.5">
+          <StatusBadge status={log.status} />
+        </td>
+        <td className="py-2.5 text-right font-mono text-xs text-[var(--text-color-secondary)]">
+          {log.duration}ms
+        </td>
+      </tr>
+      {expanded && (
+        <tr className="bg-[var(--background-color-two)]">
+          <td colSpan={4} className="px-4 py-3 text-sm">
+            <div className="space-y-1">
+              <div>
+                <span className="text-[var(--text-color-secondary)]">Source:</span>{' '}
+                {SOURCE_LABELS[log.source]}
+              </div>
+              <div>
+                <span className="text-[var(--text-color-secondary)]">Status:</span>{' '}
+                {log.status === 'success' ? 'Success' : 'Failed'}
+              </div>
+              <div>
+                <span className="text-[var(--text-color-secondary)]">Duration:</span>{' '}
+                {log.duration}ms
+              </div>
+              {log.errorMessage && (
+                <div>
+                  <span className="text-[var(--text-color-secondary)]">Error:</span>{' '}
+                  <span className="text-red-600 dark:text-red-400 font-mono text-xs">
+                    {log.errorMessage}
+                  </span>
+                </div>
+              )}
+            </div>
+          </td>
+        </tr>
+      )}
+    </>
   )
-}
+  },
+)

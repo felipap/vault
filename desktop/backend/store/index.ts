@@ -7,7 +7,7 @@ import Store from 'electron-store'
 import { MAX_LOGS } from '../config'
 import { createLogger } from '../lib/logger'
 import { decryptSecret, encryptSecret } from './keychain'
-import { ApiRequestLog, DEFAULT_STATE, StoreSchema } from './schema'
+import { DEFAULT_STATE, StoreSchema, SyncLog } from './schema'
 
 const log = createLogger('store')
 
@@ -82,20 +82,22 @@ export function setLastExportedMessageDate(date: Date): void {
   })
 }
 
-export function addRequestLog(log: Omit<ApiRequestLog, 'id'>): void {
-  const logs = store.get('requestLogs')
-  const newLog: ApiRequestLog = {
+export function addSyncLog(log: Omit<SyncLog, 'id'>): string {
+  const logs = store.get('syncLogs')
+  const id = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+  const newLog: SyncLog = {
     ...log,
-    id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+    id,
   }
   const updatedLogs = [newLog, ...logs].slice(0, MAX_LOGS)
-  store.set('requestLogs', updatedLogs)
+  store.set('syncLogs', updatedLogs)
+  return id
 }
 
-export function getRequestLogs(): ApiRequestLog[] {
-  return store.get('requestLogs')
+export function getSyncLogs(): SyncLog[] {
+  return store.get('syncLogs')
 }
 
-export function clearRequestLogs(): void {
-  store.set('requestLogs', [])
+export function clearSyncLogs(): void {
+  store.set('syncLogs', [])
 }

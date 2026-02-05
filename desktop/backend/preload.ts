@@ -4,9 +4,9 @@ import type { ElectronAPI } from '../shared-types'
 const api = {
   platform: process.platform,
 
-  // Request logs
-  getRequestLogs: () => ipcRenderer.invoke('get-request-logs'),
-  clearRequestLogs: () => ipcRenderer.invoke('clear-request-logs'),
+  // Sync logs
+  getSyncLogs: () => ipcRenderer.invoke('get-sync-logs'),
+  clearSyncLogs: () => ipcRenderer.invoke('clear-sync-logs'),
 
   // Server connection
   getServerUrl: () => ipcRenderer.invoke('get-server-url'),
