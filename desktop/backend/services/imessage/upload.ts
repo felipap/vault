@@ -3,7 +3,10 @@ import { encryptText, encryptBinaryToString } from '../../lib/encryption'
 import { type Message, type Attachment } from '../../sources/imessage'
 import { getDeviceId, getEncryptionKey } from '../../store'
 
-function encryptAttachment(attachment: Attachment, encryptionKey: string): Attachment {
+function encryptAttachment(
+  attachment: Attachment,
+  encryptionKey: string,
+): Attachment {
   if (!attachment.dataBase64) {
     return attachment
   }
@@ -14,11 +17,16 @@ function encryptAttachment(attachment: Attachment, encryptionKey: string): Attac
   }
 }
 
-function encryptMessages(messages: Message[], encryptionKey: string): Message[] {
+function encryptMessages(
+  messages: Message[],
+  encryptionKey: string,
+): Message[] {
   return messages.map((msg) => ({
     ...msg,
     text: msg.text ? encryptText(msg.text, encryptionKey) : msg.text,
-    attachments: msg.attachments.map((att) => encryptAttachment(att, encryptionKey)),
+    attachments: msg.attachments.map((att) =>
+      encryptAttachment(att, encryptionKey),
+    ),
   }))
 }
 
@@ -45,6 +53,7 @@ export async function uploadMessages(
     },
   })
   if ('error' in res) {
+    console.log('apiRequest to /api/imessages failed:', res.error)
     return { error: res.error }
   }
 

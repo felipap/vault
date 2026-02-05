@@ -74,6 +74,14 @@ export async function apiRequest<T = unknown>({
 
   if (!response.ok) {
     const text = await response.text()
+    console.log(
+      'apiRequest to',
+      url,
+      'failed:',
+      text,
+      'status:',
+      response.status,
+    )
     addRequestLog({
       timestamp: startTime,
       method,
@@ -96,10 +104,17 @@ export async function apiRequest<T = unknown>({
     duration,
   })
 
+  const text = await response.text()
+
   let json: T
   try {
-    json = (await response.json()) as T
+    json = JSON.parse(text) as T
   } catch {
+    console.log(
+      'apiRequest to',
+      url,
+      `failed with invalid JSON response ${text.slice(0, 500)}${text.length > 500 ? '...' : ''}`,
+    )
     return { error: 'Invalid JSON response', errorStatus: response.status }
   }
   return { data: json }
