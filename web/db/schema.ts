@@ -199,6 +199,7 @@ export const WhatsappMessages = pgTable(
     text: text("text"),
     sender: text("sender").notNull(),
     senderName: text("sender_name"),
+    senderPhoneNumber: text("sender_phone_number"),
     timestamp: timestamp("timestamp").notNull(),
     isFromMe: integer("is_from_me").notNull(),
     deviceId: text("device_id").notNull(),

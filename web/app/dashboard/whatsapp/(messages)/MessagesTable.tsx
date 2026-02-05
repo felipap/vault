@@ -47,31 +47,41 @@ export function MessagesTable({
         header: "Direction",
         cell: (info) => <DirectionBadge isFromMe={info.getValue()} />,
       }),
-      columnHelper.accessor("sender", {
+      columnHelper.accessor("chatId", {
         header: "Chat",
         cell: (info) => {
-          const sender = info.getValue()
-          const { decryptedChatName, decryptedSenderName, isFromMe } = info.row.original
-          const resolvedName = resolveChatName(
-            decryptedChatName,
-            decryptedSenderName,
-            sender,
-            isFromMe,
-            contactLookup
-          )
-          const showPhone = resolvedName !== formatPhone(sender)
+          const { decryptedChatName, chatId } = info.row.original
+          const displayName = decryptedChatName || formatPhone(chatId)
 
           return (
             <div className="flex items-center gap-2">
               <WhatsappIcon />
-              <div className="flex flex-col">
-                <span className="text-sm">{resolvedName}</span>
-                {showPhone && (
-                  <span className="text-xs text-zinc-500">
-                    {formatPhone(sender)}
-                  </span>
-                )}
-              </div>
+              <span className="text-sm">{displayName}</span>
+            </div>
+          )
+        },
+      }),
+      columnHelper.accessor("sender", {
+        header: "Sender",
+        cell: (info) => {
+          const sender = info.getValue()
+          const { decryptedSenderName, isFromMe } = info.row.original
+
+          if (isFromMe) {
+            return <span className="text-sm text-zinc-500">You</span>
+          }
+
+          const displayName = decryptedSenderName || contactLookup[sender.replace(/\D/g, "")] || formatPhone(sender)
+          const showPhone = displayName !== formatPhone(sender)
+
+          return (
+            <div className="flex flex-col">
+              <span className="text-sm">{displayName}</span>
+              {showPhone && (
+                <span className="text-xs text-zinc-500">
+                  {formatPhone(sender)}
+                </span>
+              )}
             </div>
           )
         },
@@ -233,35 +243,6 @@ function WhatsappIcon() {
       W
     </div>
   )
-}
-
-function resolveChatName(
-  chatName: string | null,
-  senderName: string | null,
-  sender: string,
-  isFromMe: boolean,
-  contactLookup: ContactLookup
-): string {
-  // First try the chat name (group name or contact name from WhatsApp)
-  if (chatName) {
-    return chatName
-  }
-
-  // For outgoing messages, we want to show who we're talking to, not ourselves
-  // For incoming messages, show the sender name
-  if (senderName && !isFromMe) {
-    return senderName
-  }
-
-  // Try lookup by normalized phone number
-  const normalizedPhone = sender.replace(/\D/g, "")
-  const name = contactLookup[normalizedPhone]
-  if (name) {
-    return name
-  }
-
-  // Fall back to formatted phone
-  return formatPhone(sender)
 }
 
 function formatPhone(phone: string): string {
