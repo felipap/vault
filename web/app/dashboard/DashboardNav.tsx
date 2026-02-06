@@ -14,14 +14,15 @@ import { useEffect, useState } from "react"
 import { twMerge } from "tailwind-merge"
 import { logout } from "./actions"
 
-const NAV_ITEMS = [
+const NAV_ITEMS: Array<{ href: string; label: string }> = [
   { href: "/dashboard", label: "Overview" },
   { href: "/dashboard/screenshots", label: "Screenshots" },
   { href: "/dashboard/imessages", label: "iMessages" },
   { href: "/dashboard/whatsapp", label: "WhatsApp" },
   { href: "/dashboard/contacts", label: "Contacts" },
   { href: "/dashboard/locations", label: "Locations" },
-] as const
+  { href: "/dashboard/settings", label: "Settings" },
+]
 
 export function DashboardNav() {
   const pathname = usePathname()
@@ -32,7 +33,7 @@ export function DashboardNav() {
         <div className="flex items-center justify-between py-4">
           <div className="flex items-center gap-3">
             <Link href="/dashboard" className="text-xl font-semibold">
-              Context
+              Vaulty
             </Link>
             <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
               v{process.env.APP_VERSION}
@@ -61,7 +62,7 @@ export function DashboardNav() {
             return (
               <Link
                 key={item.href}
-                href={item.href}
+                href={item.href as Route}
                 className={twMerge(
                   "border-b-2 pb-3 text-sm font-medium transition-colors",
                   isActive

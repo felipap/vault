@@ -1,6 +1,7 @@
 import { db } from "@/db"
 import { DEFAULT_USER_ID, WhatsappMessages } from "@/db/schema"
 import { logRead, logWrite } from "@/lib/activity-log"
+import { requireReadAuth } from "@/lib/api-auth"
 import { WHATSAPP_ENCRYPTED_COLUMNS } from "@/lib/encryption-schema"
 import { and, eq, gte } from "drizzle-orm"
 import { NextRequest } from "next/server"
@@ -55,6 +56,9 @@ const PostSchema = z.object({
 const MAX_LIMIT = 50
 
 export async function GET(request: NextRequest) {
+  const authError = await requireReadAuth(request)
+  if (authError) { return authError }
+
   console.log("GET /api/whatsapp/messages")
 
   const { searchParams } = new URL(request.url)

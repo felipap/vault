@@ -1,10 +1,14 @@
 import { db } from "@/db"
 import { Locations } from "@/db/schema"
 import { logRead } from "@/lib/activity-log"
+import { requireReadAuth } from "@/lib/api-auth"
 import { desc, gte } from "drizzle-orm"
 import { NextRequest } from "next/server"
 
 export async function GET(request: NextRequest) {
+  const authError = await requireReadAuth(request)
+  if (authError) { return authError }
+
   const { searchParams } = new URL(request.url)
   const withinMinParam = searchParams.get("within_min")
   const withinMin = withinMinParam ? parseInt(withinMinParam, 10) : null

@@ -1,17 +1,73 @@
-// ENCRYPTION_KEY=your-key bun scripts/decrypt-proxy.ts
+// Decrypt proxy: decrypts API responses so the AI can read plaintext.
+// You hold the key; the AI only needs an expirable token when DECRYPT_TOKEN_SECRET is set.
+//
+// Without token (local dev):
+//   ENCRYPTION_KEY=your-key bun scripts/decrypt-proxy.ts
+//
+// With expirable token (give AI only the token, not the key):
+//   ENCRYPTION_KEY=... DECRYPT_TOKEN_SECRET=... bun scripts/decrypt-proxy.ts
+//   Issue token: DECRYPT_TOKEN_SECRET=... npx tsx scripts/issue-decrypt-token.ts --expires-in 24h
+//   AI calls proxy with header: X-Decrypt-Token: <token>
 
+import { createHmac } from "crypto"
 import { createServer, IncomingMessage, ServerResponse } from "http"
 
 const PROXY_PORT = 3001
 const TARGET_HOST = process.env.TARGET_HOST || "http://localhost:3030"
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || ""
+const DECRYPT_TOKEN_SECRET = process.env.DECRYPT_TOKEN_SECRET || ""
 
 if (!ENCRYPTION_KEY) {
   console.error("❌ ENCRYPTION_KEY environment variable is required")
-  console.error(
-    "Usage: ENCRYPTION_KEY=your-key npx tsx scripts/decrypt-proxy.ts"
-  )
   process.exit(1)
+}
+
+const AUD = "contexter-decrypt"
+
+function base64UrlDecode(str: string): Buffer {
+  const base64 = str.replace(/-/g, "+").replace(/_/g, "/")
+  const pad = base64.length % 4
+  const padded = pad ? base64 + "=".repeat(4 - pad) : base64
+  return Buffer.from(padded, "base64")
+}
+
+function verifyDecryptToken(token: string): boolean {
+  if (!DECRYPT_TOKEN_SECRET) {
+    return true
+  }
+  if (!token) {
+    return false
+  }
+  const parts = token.split(".")
+  if (parts.length !== 3) {
+    return false
+  }
+  const [headerB64, payloadB64, sigB64] = parts
+  const signatureInput = `${headerB64}.${payloadB64}`
+  const expectedSig = createHmac("sha256", DECRYPT_TOKEN_SECRET)
+    .update(signatureInput)
+    .digest()
+  const expectedB64 = expectedSig
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "")
+  if (sigB64 !== expectedB64) {
+    return false
+  }
+  let payload: { aud?: string; exp?: number }
+  try {
+    payload = JSON.parse(base64UrlDecode(payloadB64).toString("utf8"))
+  } catch {
+    return false
+  }
+  if (payload.aud !== AUD || typeof payload.exp !== "number") {
+    return false
+  }
+  if (payload.exp < Math.floor(Date.now() / 1000)) {
+    return false
+  }
+  return true
 }
 
 const ALGORITHM = "AES-GCM"

@@ -250,3 +250,22 @@ export const WhatsappMessages = pgTable(
 
 export type NewWhatsappMessage = typeof WhatsappMessages.$inferInsert
 export type WhatsappMessage = typeof WhatsappMessages.$inferSelect
+
+//
+//
+//
+//
+
+export const AccessTokens = pgTable("access_tokens", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  tokenHash: text("token_hash").notNull().unique(),
+  tokenPrefix: text("token_prefix").notNull(), // e.g. "ctx_a1b2c3d4" for display
+  expiresAt: timestamp("expires_at"),
+  lastUsedAt: timestamp("last_used_at"),
+  revokedAt: timestamp("revoked_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+})
+
+export type NewAccessToken = typeof AccessTokens.$inferInsert
+export type AccessToken = typeof AccessTokens.$inferSelect

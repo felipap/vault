@@ -3,8 +3,12 @@ import { DEFAULT_USER_ID } from "@/db/schema"
 import { sql } from "drizzle-orm"
 import { NextRequest } from "next/server"
 import { logRead } from "@/lib/activity-log"
+import { requireReadAuth } from "@/lib/api-auth"
 
 export async function GET(request: NextRequest) {
+  const authError = await requireReadAuth(request)
+  if (authError) { return authError }
+
   const { searchParams } = new URL(request.url)
   const limitParam = searchParams.get("limit") || "20"
   const offsetParam = searchParams.get("offset")

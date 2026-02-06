@@ -1,12 +1,16 @@
 import { db } from "@/db"
 import { DEFAULT_USER_ID, iMessages } from "@/db/schema"
 import { logRead } from "@/lib/activity-log"
+import { requireReadAuth } from "@/lib/api-auth"
 import { and, eq, gte } from "drizzle-orm"
 import { NextRequest } from "next/server"
 
 const MAX_LIMIT = 50
 
 export async function GET(request: NextRequest) {
+  const authError = await requireReadAuth(request)
+  if (authError) { return authError }
+
   console.log("GET /api/imessages")
 
   const { searchParams } = new URL(request.url)

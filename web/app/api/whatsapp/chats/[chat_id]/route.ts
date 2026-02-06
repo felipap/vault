@@ -1,12 +1,16 @@
 import { db } from "@/db"
 import { DEFAULT_USER_ID } from "@/db/schema"
 import { logRead } from "@/lib/activity-log"
+import { requireReadAuth } from "@/lib/api-auth"
 import { sql } from "drizzle-orm"
 import { NextRequest } from "next/server"
 
 type RouteParams = { params: Promise<{ chat_id: string }> }
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
+  const authError = await requireReadAuth(request)
+  if (authError) { return authError }
+
   const { chat_id } = await params
   const chatId = decodeURIComponent(chat_id)
 

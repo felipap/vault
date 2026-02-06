@@ -3,8 +3,12 @@ import { Contacts, DEFAULT_USER_ID } from "@/db/schema"
 import { and, eq, ilike, or, sql } from "drizzle-orm"
 import { NextRequest } from "next/server"
 import { logRead } from "@/lib/activity-log"
+import { requireReadAuth } from "@/lib/api-auth"
 
 export async function GET(request: NextRequest) {
+  const authError = await requireReadAuth(request)
+  if (authError) { return authError }
+
   const searchParams = request.nextUrl.searchParams
   const query = searchParams.get("q")?.trim() || ""
   const limit = Math.min(parseInt(searchParams.get("limit") || "50"), 100)

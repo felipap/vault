@@ -1,6 +1,6 @@
-# Context Web
+# Vaulty Web
 
-The server component of Context. This is a self-hosted API that:
+The server component of Vaulty. This is a self-hosted API that:
 
 1. **Receives data from the Electron app** — Screenshots, and eventually other personal data from your machine
 2. **Exposes MCP servers** — So AI agents can access your data with your permission
@@ -24,6 +24,7 @@ Both whitelists are optional. If not set, all IPs are allowed.
 - `DASHBOARD_IP_WHITELIST` — Comma-separated list of allowed IPs for dashboard access
 
 Example:
+
 ```bash
 API_IP_WHITELIST=192.168.1.100,10.0.0.50
 DASHBOARD_IP_WHITELIST=192.168.1.0,192.168.1.1

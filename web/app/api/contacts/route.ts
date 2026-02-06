@@ -4,8 +4,12 @@ import { eq, sql } from "drizzle-orm"
 import { NextRequest } from "next/server"
 import { z } from "zod"
 import { logRead, logWrite } from "@/lib/activity-log"
+import { requireReadAuth } from "@/lib/api-auth"
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const authError = await requireReadAuth(request)
+  if (authError) { return authError }
+
   console.log("GET /api/contacts")
 
   const contacts = await db.query.Contacts.findMany({

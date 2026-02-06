@@ -1,4 +1,4 @@
-const LLMS_TXT = `# Contexter API
+const LLMS_TXT = `# Vaulty API
 
 > Personal data sync API for contacts, iMessages, WhatsApp messages, screenshots, and locations. All message content and attachments are end-to-end encrypted.
 
@@ -42,7 +42,14 @@ const LLMS_TXT = `# Contexter API
 - Dates are ISO 8601 format
 `
 
-export function GET() {
+import { requireReadAuth } from "@/lib/api-auth"
+
+export async function GET(request: Request) {
+  const authError = await requireReadAuth(request)
+  if (authError) {
+    return authError
+  }
+
   return new Response(LLMS_TXT, {
     headers: {
       "Content-Type": "text/plain; charset=utf-8",

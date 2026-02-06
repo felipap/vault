@@ -68,7 +68,7 @@ export function proxy(request: NextRequest) {
     // Check if IP is whitelisted, then check the secret.
     //
     // Read and write handlers MAY be protected by IP whitelist. For writing,
-    // it'd require users of the Context desktop app to be behind a fixed IP,
+    // it'd require users of the Vaulty desktop app to be behind a fixed IP,
     // which is hard to do. Reading use-cases will depend on what users do with
     // their context.
 

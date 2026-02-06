@@ -3,8 +3,12 @@ import { DEFAULT_USER_ID, iMessages } from "@/db/schema"
 import { and, desc, eq } from "drizzle-orm"
 import { NextRequest } from "next/server"
 import { logRead } from "@/lib/activity-log"
+import { requireReadAuth } from "@/lib/api-auth"
 
 export async function GET(request: NextRequest) {
+  const authError = await requireReadAuth(request)
+  if (authError) { return authError }
+
   const url = new URL(request.url)
   const phone = url.pathname.split("/").pop()
 

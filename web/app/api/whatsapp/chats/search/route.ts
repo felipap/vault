@@ -1,11 +1,15 @@
 import { db } from "@/db"
 import { DEFAULT_USER_ID } from "@/db/schema"
 import { logRead } from "@/lib/activity-log"
+import { requireReadAuth } from "@/lib/api-auth"
 import { normalizePhoneForSearch } from "@/lib/search-normalize"
 import { sql } from "drizzle-orm"
 import { NextRequest } from "next/server"
 
 export async function GET(request: NextRequest) {
+  const authError = await requireReadAuth(request)
+  if (authError) { return authError }
+
   const { searchParams } = new URL(request.url)
   const sender = searchParams.get("sender") || ""
   const senderPhoneNumberIndex = searchParams.get("senderPhoneNumberIndex") // HMAC blind index for encrypted sender_phone_number
