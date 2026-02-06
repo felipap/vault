@@ -5,11 +5,12 @@ export type WhatsAppMessage = {
   chatId: string
   chatName: string | null
   text: string | null
-  sender: string | null
+  senderJid: string | null
   senderName: string | null
   senderPhoneNumber: string | null
   timestamp: string
   isFromMe: boolean
+  chatIsGroupChat: boolean
   messageType: number
   hasMedia: boolean
   attachments: WhatsAppAttachment[]

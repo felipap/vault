@@ -40,7 +40,7 @@ function ChatInfo({
   chat: WhatsappChatWithMessages
   displayName: string
 }) {
-  const isGroup = chat.participantCount > 2
+  const isGroup = chat.isGroupChat
 
   return (
     <div className="rounded-lg bg-zinc-50 p-4 dark:bg-zinc-950">
@@ -79,7 +79,7 @@ function ChatAvatar({
   chat: WhatsappChatWithMessages
   displayName: string
 }) {
-  const isGroup = chat.participantCount > 2
+  const isGroup = chat.isGroupChat
 
   if (isGroup) {
     return (

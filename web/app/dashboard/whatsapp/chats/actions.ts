@@ -13,6 +13,7 @@ export type WhatsappChat = {
   lastMessageText: string | null
   lastMessageDate: Date | null
   lastMessageFromMe: boolean
+  isGroupChat: boolean
   participantCount: number
   participants: string[]
   messageCount: number
@@ -44,7 +45,7 @@ export async function getWhatsappChats(
     SELECT COUNT(DISTINCT chat_id)::int as count
     FROM whatsapp_messages
     WHERE user_id = ${DEFAULT_USER_ID}
-      ${hasSearch ? sql`AND REGEXP_REPLACE(sender, '[^0-9]', '', 'g') LIKE '%' || ${normalizedSearch} || '%'` : sql``}
+      ${hasSearch ? sql`AND REGEXP_REPLACE(sender_jid, '[^0-9]', '', 'g') LIKE '%' || ${normalizedSearch} || '%'` : sql``}
   `)
 
   const total = countResult.count
@@ -54,8 +55,9 @@ export async function getWhatsappChats(
     chat_name: string | null
     text: string | null
     timestamp: Date | null
-    is_from_me: number
+    is_from_me: boolean
     participant_count: number
+    is_group_chat: boolean
     participants: string[]
     message_count: number
   }>(sql`
@@ -67,7 +69,7 @@ export async function getWhatsappChats(
         text,
         timestamp,
         is_from_me,
-        sender,
+        sender_jid,
         ROW_NUMBER() OVER (
           PARTITION BY chat_id
           ORDER BY timestamp DESC NULLS LAST
@@ -78,9 +80,10 @@ export async function getWhatsappChats(
     chat_participants AS (
       SELECT
         chat_id,
-        COUNT(DISTINCT sender) as participant_count,
+        COUNT(DISTINCT sender_jid) as participant_count,
         COUNT(*) as message_count,
-        ARRAY_AGG(DISTINCT sender) as participants
+        BOOL_OR(is_group_chat) as is_group_chat,
+        ARRAY_AGG(DISTINCT sender_jid) as participants
       FROM whatsapp_messages
       WHERE user_id = ${DEFAULT_USER_ID}
       GROUP BY chat_id
@@ -89,7 +92,7 @@ export async function getWhatsappChats(
       SELECT DISTINCT chat_id
       FROM whatsapp_messages
       WHERE user_id = ${DEFAULT_USER_ID}
-        ${hasSearch ? sql`AND REGEXP_REPLACE(sender, '[^0-9]', '', 'g') LIKE '%' || ${normalizedSearch} || '%'` : sql``}
+        ${hasSearch ? sql`AND REGEXP_REPLACE(sender_jid, '[^0-9]', '', 'g') LIKE '%' || ${normalizedSearch} || '%'` : sql``}
     )
     SELECT
       rm.chat_id,
@@ -98,6 +101,7 @@ export async function getWhatsappChats(
       rm.timestamp,
       rm.is_from_me,
       cp.participant_count,
+      cp.is_group_chat,
       cp.participants,
       cp.message_count
     FROM ranked_messages rm
@@ -115,7 +119,8 @@ export async function getWhatsappChats(
       chatName: row.chat_name,
       lastMessageText: row.text,
       lastMessageDate: row.timestamp,
-      lastMessageFromMe: row.is_from_me === 1,
+      lastMessageFromMe: row.is_from_me,
+      isGroupChat: row.is_group_chat,
       participantCount: Number(row.participant_count),
       participants: row.participants,
       messageCount: Number(row.message_count),
@@ -130,7 +135,7 @@ export async function getWhatsappChats(
 export type WhatsappChatMessage = {
   id: string
   text: string | null
-  sender: string
+  senderJid: string | null
   senderName: string | null
   timestamp: Date
   isFromMe: boolean
@@ -159,8 +164,9 @@ export async function getWhatsappChatWithMessages(
     chat_name: string | null
     text: string | null
     timestamp: Date | null
-    is_from_me: number
+    is_from_me: boolean
     participant_count: number
+    is_group_chat: boolean
     participants: string[]
     message_count: number
   }>(sql`
@@ -181,9 +187,10 @@ export async function getWhatsappChatWithMessages(
     chat_participants AS (
       SELECT
         chat_id,
-        COUNT(DISTINCT sender) as participant_count,
+        COUNT(DISTINCT sender_jid) as participant_count,
         COUNT(*) as message_count,
-        ARRAY_AGG(DISTINCT sender) as participants
+        BOOL_OR(is_group_chat) as is_group_chat,
+        ARRAY_AGG(DISTINCT sender_jid) as participants
       FROM whatsapp_messages
       WHERE user_id = ${DEFAULT_USER_ID}
       GROUP BY chat_id
@@ -195,6 +202,7 @@ export async function getWhatsappChatWithMessages(
       rm.timestamp,
       rm.is_from_me,
       cp.participant_count,
+      cp.is_group_chat,
       cp.participants,
       cp.message_count
     FROM ranked_messages rm
@@ -213,15 +221,15 @@ export async function getWhatsappChatWithMessages(
   const messagesResult = await db.execute<{
     id: string
     text: string | null
-    sender: string
+    sender_jid: string | null
     sender_name: string | null
     timestamp: Date
-    is_from_me: number
+    is_from_me: boolean
   }>(sql`
     SELECT
       id,
       text,
-      sender,
+      sender_jid,
       sender_name,
       timestamp,
       is_from_me
@@ -235,19 +243,20 @@ export async function getWhatsappChatWithMessages(
   return {
     chatId: chatRow.chat_id,
     chatName: chatRow.chat_name,
+    isGroupChat: chatRow.is_group_chat,
     lastMessageText: chatRow.text,
     lastMessageDate: chatRow.timestamp,
-    lastMessageFromMe: chatRow.is_from_me === 1,
+    lastMessageFromMe: chatRow.is_from_me,
     participantCount: Number(chatRow.participant_count),
     participants: chatRow.participants,
     messageCount: Number(chatRow.message_count),
     messages: [...messagesResult].map((m) => ({
       id: m.id,
       text: m.text,
-      sender: m.sender,
+      senderJid: m.sender_jid,
       senderName: m.sender_name,
       timestamp: m.timestamp,
-      isFromMe: m.is_from_me === 1,
+      isFromMe: m.is_from_me,
     })),
   }
 }
@@ -274,15 +283,15 @@ export async function getWhatsappChatMessages(
   const messagesResult = await db.execute<{
     id: string
     text: string | null
-    sender: string
+    sender_jid: string | null
     sender_name: string | null
     timestamp: Date
-    is_from_me: number
+    is_from_me: boolean
   }>(sql`
     SELECT
       id,
       text,
-      sender,
+      sender_jid,
       sender_name,
       timestamp,
       is_from_me
@@ -297,10 +306,10 @@ export async function getWhatsappChatMessages(
   const messages = [...messagesResult].map((m) => ({
     id: m.id,
     text: m.text,
-    sender: m.sender,
+    senderJid: m.sender_jid,
     senderName: m.sender_name,
     timestamp: m.timestamp,
-    isFromMe: m.is_from_me === 1,
+    isFromMe: m.is_from_me,
   }))
 
   return {

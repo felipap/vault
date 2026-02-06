@@ -19,12 +19,13 @@ function toWhatsAppMessage(msg: WhatsappSqliteMessage): WhatsAppMessage {
     chatId: msg.chatId,
     chatName: msg.chatName,
     text: msg.text,
-    sender: msg.senderJid,
+    senderJid: msg.senderJid,
     senderName: msg.senderName,
     senderPhoneNumber: msg.senderPhoneNumber,
     timestamp: msg.timestamp,
     messageType: msg.messageType,
     isFromMe: msg.isFromMe,
+    chatIsGroupChat: msg.chatIsGroupChat,
     hasMedia: msg.hasMedia,
     attachments: [], // TODO: implement attachment syncing
   }

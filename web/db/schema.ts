@@ -1,4 +1,5 @@
 import {
+  boolean,
   index,
   integer,
   jsonb,
@@ -45,11 +46,11 @@ export const iMessages = pgTable(
     // encrypted
     subject: text("subject"),
     date: timestamp("date"),
-    isFromMe: integer("is_from_me").notNull(),
-    isRead: integer("is_read").notNull(),
-    isSent: integer("is_sent").notNull(),
-    isDelivered: integer("is_delivered").notNull(),
-    hasAttachments: integer("has_attachments").notNull(),
+    isFromMe: boolean("is_from_me").notNull(),
+    isRead: boolean("is_read").notNull(),
+    isSent: boolean("is_sent").notNull(),
+    isDelivered: boolean("is_delivered").notNull(),
+    hasAttachments: boolean("has_attachments").notNull(),
     service: text("service").notNull(),
     chatId: text("chat_id"),
     chatName: text("chat_name"),
@@ -81,7 +82,7 @@ export const iMessageAttachments = pgTable("imessage_attachments", {
   filename: text("filename").notNull(),
   mimeType: text("mime_type").notNull(),
   size: integer("size"),
-  isImage: integer("is_image"),
+  isImage: boolean("is_image"),
   // encrypted
   dataBase64: text("data_base64"),
   deviceId: text("device_id").notNull(),
@@ -218,7 +219,8 @@ export const WhatsappMessages = pgTable(
     chatNameIndex: text("chat_name_index"),
     // encrypted
     text: text("text"),
-    sender: text("sender").notNull(),
+    // Null for messages from me (outgoing); required for others
+    senderJid: text("sender_jid"),
     // encrypted
     senderName: text("sender_name"),
     // HMAC blind index
@@ -228,14 +230,15 @@ export const WhatsappMessages = pgTable(
     // HMAC blind index
     senderPhoneNumberIndex: text("sender_phone_number_index"),
     timestamp: timestamp("timestamp").notNull(),
-    isFromMe: integer("is_from_me").notNull(),
+    isFromMe: boolean("is_from_me").notNull(),
+    isGroupChat: boolean("is_group_chat").notNull(),
     deviceId: text("device_id").notNull(),
     syncTime: timestamp("sync_time").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [
     index("whatsapp_messages_chat_id_idx").on(table.chatId),
-    index("whatsapp_messages_sender_idx").on(table.sender),
+    index("whatsapp_messages_sender_jid_idx").on(table.senderJid),
     index("whatsapp_messages_timestamp_idx").on(table.timestamp),
     index("whatsapp_messages_chat_name_index_idx").on(table.chatNameIndex),
     index("whatsapp_messages_sender_name_index_idx").on(table.senderNameIndex),

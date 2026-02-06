@@ -15,8 +15,10 @@ export function MessageDrawer({ message }: Props) {
     <Drawer title="Message Details">
       <div className="space-y-4">
         <InfoRow label="Message ID" value={message.messageId} />
-        <InfoRow label="Sender" value={message.senderName || message.sender} />
-        {message.senderName && <InfoRow label="Phone" value={message.sender} />}
+        <InfoRow label="Sender" value={message.senderName ?? message.senderJid ?? ""} />
+        {message.senderName && message.senderJid && (
+          <InfoRow label="JID" value={message.senderJid} />
+        )}
         <InfoRow
           label="Direction"
           value={message.isFromMe ? "Sent" : "Received"}

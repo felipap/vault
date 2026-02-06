@@ -1,13 +1,11 @@
-// This batch stuff here seems way too complicated but whatever...
-
 import { db } from "@/db"
 import { DEFAULT_USER_ID, iMessageAttachments, iMessages } from "@/db/schema"
-import { logRead, logWrite } from "@/lib/activity-log"
+import { logWrite } from "@/lib/activity-log"
 import {
   ATTACHMENT_ENCRYPTED_COLUMNS,
   IMESSAGE_ENCRYPTED_COLUMNS,
 } from "@/lib/encryption-schema"
-import { and, eq, gte, sql } from "drizzle-orm"
+import { sql } from "drizzle-orm"
 import { NextRequest } from "next/server"
 import { z } from "zod"
 
@@ -35,11 +33,9 @@ const contactFormat = z.string().refine(
 )
 
 const AttachmentSchema = z.object({
-  // Required - validated in original code
   id: z.string(),
   filename: z.string(),
   mimeType: z.string(),
-  // Optional - not validated in original, but used in insert
   path: z.string().optional(),
   size: z.number().optional(),
   isImage: z.boolean().optional(),
@@ -67,105 +63,258 @@ const MessageSchema = z.object({
 
 type ValidatedMessage = z.infer<typeof MessageSchema>
 
-const MAX_LIMIT = 50
+const PostSchema = z.object({
+  messages: z.array(z.unknown()),
+  syncTime: z.string(),
+  deviceId: z.string(),
+  messageCount: z.number(),
+})
 
-export async function GET(request: NextRequest) {
-  console.log("GET /api/imessages")
-
-  const { searchParams } = new URL(request.url)
-  const limitParam = searchParams.get("limit") || "20"
-  const offsetParam = searchParams.get("offset")
-  const afterParam = searchParams.get("after")
-  const contactParam = searchParams.get("contact")
-
-  // if (!limitParam) {
-  //   limitParam = "20"
-  //   // return Response.json(
-  //   //   { error: "limit query parameter is required" },
-  //   //   { status: 400 }
-  //   // )
-  // }
-
-  const limit = parseInt(limitParam, 10)
-  const offset = offsetParam ? parseInt(offsetParam, 10) : 0
-
-  if (isNaN(limit) || limit < 1) {
-    return Response.json(
-      { error: "limit must be a positive integer" },
-      { status: 400 }
-    )
-  }
-
-  if (limit > MAX_LIMIT) {
-    return Response.json(
-      { error: `limit must not exceed ${MAX_LIMIT}` },
-      { status: 400 }
-    )
-  }
-
-  if (isNaN(offset) || offset < 0) {
-    return Response.json(
-      { error: "offset must be a non-negative integer" },
-      { status: 400 }
-    )
-  }
-
-  const conditions = [eq(iMessages.userId, DEFAULT_USER_ID)]
-
-  if (contactParam) {
-    conditions.push(eq(iMessages.contact, contactParam))
-  }
-
-  if (afterParam) {
-    const afterDate = new Date(afterParam)
-    if (isNaN(afterDate.getTime())) {
-      return Response.json(
-        { error: 'Invalid date format for "after" parameter' },
-        { status: 400 }
-      )
-    }
-    conditions.push(gte(iMessages.date, afterDate))
-  }
-
-  const messages = await db.query.iMessages.findMany({
-    where: and(...conditions),
-    orderBy: (iMessages, { asc }) => [asc(iMessages.date)],
-    limit,
-    offset,
-  })
-
-  console.info(
-    `Retrieved ${messages.length} iMessages${contactParam ? ` for contact ${contactParam}` : ""}`
-  )
-
-  await logRead({
-    type: "imessage",
-    description: contactParam
-      ? `Fetched messages for ${contactParam}`
-      : "Fetched messages",
-    count: messages.length,
-  })
-
-  return Response.json({
-    success: true,
-    messages,
-    count: messages.length,
-    page: {
-      limit,
-      offset,
-    },
-  })
+function formatZodError(error: z.ZodError): string {
+  return error.issues
+    .map((issue) => {
+      const path = issue.path.length > 0 ? `${issue.path.join(".")}: ` : ""
+      return `${path}${issue.message}`
+    })
+    .join("; ")
 }
 
-//
-//
-//
-//
-//
-//
-//
-//
-//
+function truncateForLog(obj: unknown): unknown {
+  if (typeof obj !== "object" || obj === null) {
+    return obj
+  }
+
+  const result: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(obj)) {
+    if (key === "dataBase64" && typeof value === "string") {
+      result[key] = `[base64 ${value.length} chars]`
+    } else if (key === "attachments" && Array.isArray(value)) {
+      result[key] = value.map((att) => truncateForLog(att))
+    } else {
+      result[key] = value
+    }
+  }
+  return result
+}
+
+function validateMessages(messages: unknown[]) {
+  const validMessages: ValidatedMessage[] = []
+  const rejectedMessages: Array<{
+    index: number
+    message: unknown
+    error: string
+  }> = []
+
+  for (let i = 0; i < messages.length; i++) {
+    const message = messages[i]
+    const result = MessageSchema.safeParse(message)
+
+    if (!result.success) {
+      const error = formatZodError(result.error)
+      rejectedMessages.push({ index: i, message, error })
+      console.warn(
+        `Rejected message at index ${i}:`,
+        JSON.stringify({ message: truncateForLog(message), error }, null, 2)
+      )
+      continue
+    }
+
+    const parsed = result.data
+
+    if (parsed.hasAttachments && parsed.attachments?.length) {
+      const invalidAttachments = parsed.attachments.filter(
+        (att) => !att.dataBase64
+      )
+      if (invalidAttachments.length > 0) {
+        const error = `Message has ${invalidAttachments.length} attachment(s) missing dataBase64: ${invalidAttachments.map((a) => a.id).join(", ")}`
+        rejectedMessages.push({ index: i, message, error })
+        console.warn(
+          `Rejected message attachment at index ${i}:`,
+          JSON.stringify({ message: truncateForLog(message), parsed, error })
+        )
+        continue
+      }
+    }
+
+    validMessages.push(parsed)
+  }
+
+  return { validMessages, rejectedMessages }
+}
+
+function toMessageValues(
+  validMessage: ValidatedMessage,
+  deviceId: string,
+  syncTime: string,
+  createdAt: Date
+) {
+  return {
+    userId: DEFAULT_USER_ID,
+    messageId:
+      typeof validMessage.id === "string"
+        ? parseInt(validMessage.id, 10) || 0
+        : validMessage.id,
+    guid: validMessage.guid,
+    text: validMessage.text,
+    contact: validMessage.contact,
+    subject: validMessage.subject,
+    date: validMessage.date ? new Date(validMessage.date) : null,
+    isFromMe: validMessage.isFromMe,
+    isRead: validMessage.isRead,
+    isSent: validMessage.isSent,
+    isDelivered: validMessage.isDelivered,
+    hasAttachments: validMessage.hasAttachments,
+    service: validMessage.service,
+    chatId: validMessage.chatId ?? null,
+    chatName: validMessage.chatName ?? null,
+    deviceId,
+    syncTime: new Date(syncTime),
+    createdAt,
+  }
+}
+
+type InsertResult = {
+  inserted: Array<{ id: string; guid: string }>
+  updated: Array<{ id: string; guid: string }>
+}
+
+async function insertMessagesInBatches(
+  validMessages: ValidatedMessage[],
+  deviceId: string,
+  syncTime: string
+): Promise<InsertResult> {
+  const BATCH_SIZE = 50
+  const UPSERT_DAYS = 60
+  const upsertCutoff = new Date()
+  upsertCutoff.setDate(upsertCutoff.getDate() - UPSERT_DAYS)
+
+  const recentMessages: ValidatedMessage[] = []
+  const olderMessages: ValidatedMessage[] = []
+
+  for (const msg of validMessages) {
+    const msgDate = msg.date ? new Date(msg.date) : null
+    if (msgDate && msgDate >= upsertCutoff) {
+      recentMessages.push(msg)
+    } else {
+      olderMessages.push(msg)
+    }
+  }
+
+  console.info(
+    `Splitting ${validMessages.length} messages: ${recentMessages.length} recent (upsert), ${olderMessages.length} older (insert only)`
+  )
+
+  const inserted: Array<{ id: string; guid: string }> = []
+  const updated: Array<{ id: string; guid: string }> = []
+
+  if (olderMessages.length > 0) {
+    const totalBatches = Math.ceil(olderMessages.length / BATCH_SIZE)
+    for (let i = 0; i < olderMessages.length; i += BATCH_SIZE) {
+      const batchNumber = Math.floor(i / BATCH_SIZE) + 1
+      const batch = olderMessages.slice(i, i + BATCH_SIZE)
+      const batchCreatedAt = new Date()
+      const batchValues = batch.map((m) =>
+        toMessageValues(m, deviceId, syncTime, batchCreatedAt)
+      )
+
+      const result = await db
+        .insert(iMessages)
+        .values(batchValues)
+        .onConflictDoNothing()
+        .returning()
+
+      inserted.push(...result)
+      console.info(
+        `Older batch ${batchNumber}/${totalBatches}: Inserted ${result.length} messages`
+      )
+    }
+  }
+
+  if (recentMessages.length > 0) {
+    const totalBatches = Math.ceil(recentMessages.length / BATCH_SIZE)
+    for (let i = 0; i < recentMessages.length; i += BATCH_SIZE) {
+      const batchNumber = Math.floor(i / BATCH_SIZE) + 1
+      const batch = recentMessages.slice(i, i + BATCH_SIZE)
+      const batchCreatedAt = new Date()
+      const batchValues = batch.map((m) =>
+        toMessageValues(m, deviceId, syncTime, batchCreatedAt)
+      )
+
+      const result = await db
+        .insert(iMessages)
+        .values(batchValues)
+        .onConflictDoUpdate({
+          target: iMessages.guid,
+          set: {
+            isRead: sql`excluded.is_read`,
+            isDelivered: sql`excluded.is_delivered`,
+            isSent: sql`excluded.is_sent`,
+            syncTime: sql`excluded.sync_time`,
+          },
+        })
+        .returning()
+
+      for (const row of result) {
+        if (row.createdAt.getTime() === batchCreatedAt.getTime()) {
+          inserted.push(row)
+        } else {
+          updated.push(row)
+        }
+      }
+
+      console.info(
+        `Recent batch ${batchNumber}/${totalBatches}: Inserted ${result.filter((r) => r.createdAt.getTime() === batchCreatedAt.getTime()).length}, Updated ${result.filter((r) => r.createdAt.getTime() !== batchCreatedAt.getTime()).length} messages`
+      )
+    }
+  }
+
+  return { inserted, updated }
+}
+
+async function insertAttachments(
+  validMessages: ValidatedMessage[],
+  insertedMessages: Array<{ id: string; guid: string }>,
+  deviceId: string,
+  syncTime: string
+) {
+  const insertedAttachments = []
+  const insertedGuids = new Set(insertedMessages.map((m) => m.guid))
+
+  for (const message of validMessages) {
+    if (!message.attachments || message.attachments.length === 0) {
+      continue
+    }
+
+    if (!insertedGuids.has(message.guid)) {
+      continue
+    }
+
+    for (const attachment of message.attachments) {
+      const result = await db
+        .insert(iMessageAttachments)
+        .values({
+          userId: DEFAULT_USER_ID,
+          messageGuid: message.guid,
+          attachmentId: attachment.id,
+          filename: attachment.filename,
+          mimeType: attachment.mimeType,
+          size: attachment.size,
+          isImage: attachment.isImage ?? false,
+          dataBase64: attachment.dataBase64!,
+          deviceId,
+          syncTime: new Date(syncTime),
+        })
+        .onConflictDoNothing()
+        .returning()
+
+      if (result.length > 0) {
+        insertedAttachments.push(...result)
+      }
+    }
+  }
+
+  return insertedAttachments
+}
 
 export async function POST(request: NextRequest) {
   console.log("POST /api/imessages")
@@ -201,7 +350,6 @@ export async function POST(request: NextRequest) {
     syncTime
   )
 
-  // Insert attachments for messages that were inserted (not updated)
   const insertedAttachments = await insertAttachments(
     validMessages,
     inserted,
@@ -257,264 +405,3 @@ export async function POST(request: NextRequest) {
     syncedAt: new Date().toISOString(),
   })
 }
-
-function formatZodError(error: z.ZodError): string {
-  return error.issues
-    .map((issue) => {
-      const path = issue.path.length > 0 ? `${issue.path.join(".")}: ` : ""
-      return `${path}${issue.message}`
-    })
-    .join("; ")
-}
-
-function truncateForLog(obj: unknown): unknown {
-  if (typeof obj !== "object" || obj === null) {
-    return obj
-  }
-
-  const result: Record<string, unknown> = {}
-  for (const [key, value] of Object.entries(obj)) {
-    if (key === "dataBase64" && typeof value === "string") {
-      result[key] = `[base64 ${value.length} chars]`
-    } else if (key === "attachments" && Array.isArray(value)) {
-      result[key] = value.map((att) => truncateForLog(att))
-    } else {
-      result[key] = value
-    }
-  }
-  return result
-}
-
-function validateMessages(messages: unknown[]) {
-  const validMessages: ValidatedMessage[] = []
-  const rejectedMessages: Array<{
-    index: number
-    message: unknown
-    error: string
-  }> = []
-
-  for (let i = 0; i < messages.length; i++) {
-    const message = messages[i]
-    const result = MessageSchema.safeParse(message)
-
-    if (!result.success) {
-      const error = formatZodError(result.error)
-      rejectedMessages.push({ index: i, message, error })
-      console.warn(
-        `Rejected message at index ${i}:`,
-        JSON.stringify({ message: truncateForLog(message), error }, null, 2)
-      )
-      continue
-    }
-
-    const parsed = result.data
-
-    // If message has attachments, all attachments must have dataBase64
-    if (parsed.hasAttachments && parsed.attachments?.length) {
-      const invalidAttachments = parsed.attachments.filter(
-        (att) => !att.dataBase64
-      )
-      if (invalidAttachments.length > 0) {
-        const error = `Message has ${invalidAttachments.length} attachment(s) missing dataBase64: ${invalidAttachments.map((a) => a.id).join(", ")}`
-        rejectedMessages.push({ index: i, message, error })
-        console.warn(
-          `Rejected message attachment at index ${i}:`,
-          JSON.stringify({ message: truncateForLog(message), parsed, error })
-        )
-        continue
-      }
-    }
-
-    validMessages.push(parsed)
-  }
-
-  return { validMessages, rejectedMessages }
-}
-
-function toMessageValues(
-  validMessage: ValidatedMessage,
-  deviceId: string,
-  syncTime: string,
-  createdAt: Date
-) {
-  return {
-    userId: DEFAULT_USER_ID,
-    messageId:
-      typeof validMessage.id === "string"
-        ? parseInt(validMessage.id, 10) || 0
-        : validMessage.id,
-    guid: validMessage.guid,
-    text: validMessage.text,
-    contact: validMessage.contact,
-    subject: validMessage.subject,
-    date: validMessage.date ? new Date(validMessage.date) : null,
-    isFromMe: validMessage.isFromMe ? 1 : 0,
-    isRead: validMessage.isRead ? 1 : 0,
-    isSent: validMessage.isSent ? 1 : 0,
-    isDelivered: validMessage.isDelivered ? 1 : 0,
-    hasAttachments: validMessage.hasAttachments ? 1 : 0,
-    service: validMessage.service,
-    chatId: validMessage.chatId ?? null,
-    chatName: validMessage.chatName ?? null,
-    deviceId,
-    syncTime: new Date(syncTime),
-    createdAt,
-  }
-}
-
-type InsertResult = {
-  inserted: Array<{ id: string; guid: string }>
-  updated: Array<{ id: string; guid: string }>
-}
-
-async function insertMessagesInBatches(
-  validMessages: ValidatedMessage[],
-  deviceId: string,
-  syncTime: string
-): Promise<InsertResult> {
-  const BATCH_SIZE = 50
-  const UPSERT_DAYS = 60
-  const upsertCutoff = new Date()
-  upsertCutoff.setDate(upsertCutoff.getDate() - UPSERT_DAYS)
-
-  // Split messages into recent (upsert) and older (insert only)
-  const recentMessages: ValidatedMessage[] = []
-  const olderMessages: ValidatedMessage[] = []
-
-  for (const msg of validMessages) {
-    const msgDate = msg.date ? new Date(msg.date) : null
-    if (msgDate && msgDate >= upsertCutoff) {
-      recentMessages.push(msg)
-    } else {
-      olderMessages.push(msg)
-    }
-  }
-
-  console.info(
-    `Splitting ${validMessages.length} messages: ${recentMessages.length} recent (upsert), ${olderMessages.length} older (insert only)`
-  )
-
-  const inserted: Array<{ id: string; guid: string }> = []
-  const updated: Array<{ id: string; guid: string }> = []
-
-  // Insert older messages with onConflictDoNothing
-  if (olderMessages.length > 0) {
-    const totalBatches = Math.ceil(olderMessages.length / BATCH_SIZE)
-    for (let i = 0; i < olderMessages.length; i += BATCH_SIZE) {
-      const batchNumber = Math.floor(i / BATCH_SIZE) + 1
-      const batch = olderMessages.slice(i, i + BATCH_SIZE)
-      const batchCreatedAt = new Date()
-      const batchValues = batch.map((m) =>
-        toMessageValues(m, deviceId, syncTime, batchCreatedAt)
-      )
-
-      const result = await db
-        .insert(iMessages)
-        .values(batchValues)
-        .onConflictDoNothing()
-        .returning()
-
-      // onConflictDoNothing only returns actually inserted rows
-      inserted.push(...result)
-      console.info(
-        `Older batch ${batchNumber}/${totalBatches}: Inserted ${result.length} messages`
-      )
-    }
-  }
-
-  // Upsert recent messages to update isRead, isDelivered, isSent
-  if (recentMessages.length > 0) {
-    const totalBatches = Math.ceil(recentMessages.length / BATCH_SIZE)
-    for (let i = 0; i < recentMessages.length; i += BATCH_SIZE) {
-      const batchNumber = Math.floor(i / BATCH_SIZE) + 1
-      const batch = recentMessages.slice(i, i + BATCH_SIZE)
-      const batchCreatedAt = new Date()
-      const batchValues = batch.map((m) =>
-        toMessageValues(m, deviceId, syncTime, batchCreatedAt)
-      )
-
-      const result = await db
-        .insert(iMessages)
-        .values(batchValues)
-        .onConflictDoUpdate({
-          target: iMessages.guid,
-          set: {
-            isRead: sql`excluded.is_read`,
-            isDelivered: sql`excluded.is_delivered`,
-            isSent: sql`excluded.is_sent`,
-            syncTime: sql`excluded.sync_time`,
-          },
-        })
-        .returning()
-
-      // Separate inserted vs updated by comparing createdAt to our batch timestamp
-      for (const row of result) {
-        if (row.createdAt.getTime() === batchCreatedAt.getTime()) {
-          inserted.push(row)
-        } else {
-          updated.push(row)
-        }
-      }
-
-      console.info(
-        `Recent batch ${batchNumber}/${totalBatches}: Inserted ${result.filter((r) => r.createdAt.getTime() === batchCreatedAt.getTime()).length}, Updated ${result.filter((r) => r.createdAt.getTime() !== batchCreatedAt.getTime()).length} messages`
-      )
-    }
-  }
-
-  return { inserted, updated }
-}
-
-async function insertAttachments(
-  validMessages: ValidatedMessage[],
-  insertedMessages: Array<{ id: string; guid: string }>,
-  deviceId: string,
-  syncTime: string
-) {
-  const insertedAttachments = []
-  const insertedGuids = new Set(insertedMessages.map((m) => m.guid))
-
-  for (const message of validMessages) {
-    if (!message.attachments || message.attachments.length === 0) {
-      continue
-    }
-
-    if (!insertedGuids.has(message.guid)) {
-      // Message wasn't inserted (duplicate), skip attachments
-      continue
-    }
-
-    for (const attachment of message.attachments) {
-      // dataBase64 is guaranteed to exist - validated in validateMessages
-      const result = await db
-        .insert(iMessageAttachments)
-        .values({
-          userId: DEFAULT_USER_ID,
-          messageGuid: message.guid,
-          attachmentId: attachment.id,
-          filename: attachment.filename,
-          mimeType: attachment.mimeType,
-          size: attachment.size,
-          isImage: attachment.isImage ? 1 : 0,
-          dataBase64: attachment.dataBase64!,
-          deviceId,
-          syncTime: new Date(syncTime),
-        })
-        .onConflictDoNothing()
-        .returning()
-
-      if (result.length > 0) {
-        insertedAttachments.push(...result)
-      }
-    }
-  }
-
-  return insertedAttachments
-}
-
-const PostSchema = z.object({
-  messages: z.array(z.unknown()),
-  syncTime: z.string(),
-  deviceId: z.string(),
-  messageCount: z.number(),
-})

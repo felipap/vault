@@ -71,8 +71,9 @@ async function getLatestChats(
     chat_name: string | null
     text: string | null
     timestamp: Date | null
-    is_from_me: number
+    is_from_me: boolean
     participant_count: number
+    is_group_chat: boolean
     participants: string[]
     message_count: number
   }>(sql`
@@ -83,7 +84,7 @@ async function getLatestChats(
         text,
         timestamp,
         is_from_me,
-        sender,
+        sender_jid,
         ROW_NUMBER() OVER (
           PARTITION BY chat_id
           ORDER BY timestamp DESC NULLS LAST
@@ -94,9 +95,10 @@ async function getLatestChats(
     chat_participants AS (
       SELECT
         chat_id,
-        COUNT(DISTINCT sender) as participant_count,
+        COUNT(DISTINCT sender_jid) as participant_count,
         COUNT(*) as message_count,
-        ARRAY_AGG(DISTINCT sender) as participants
+        BOOL_OR(is_group_chat) as is_group_chat,
+        ARRAY_AGG(DISTINCT sender_jid) as participants
       FROM whatsapp_messages
       WHERE user_id = ${DEFAULT_USER_ID}
       GROUP BY chat_id
@@ -108,6 +110,7 @@ async function getLatestChats(
       rm.timestamp,
       rm.is_from_me,
       cp.participant_count,
+      cp.is_group_chat,
       cp.participants,
       cp.message_count
     FROM ranked_messages rm
@@ -120,10 +123,10 @@ async function getLatestChats(
   const chats: Chat[] = [...result].map((row) => ({
     chatId: row.chat_id,
     chatName: row.chat_name,
-    isGroupChat: Number(row.participant_count) > 2,
+    isGroupChat: row.is_group_chat,
     lastMessageText: row.text,
     lastMessageDate: row.timestamp,
-    lastMessageFromMe: row.is_from_me === 1,
+    lastMessageFromMe: row.is_from_me,
     participantCount: Number(row.participant_count),
     participants: row.participants,
     messageCount: Number(row.message_count),

@@ -28,12 +28,13 @@ function toWhatsAppMessage(msg: UnipileMessage): WhatsAppMessage {
     chatId: msg.chatId,
     chatName: null,
     text: msg.text,
-    sender: msg.sender,
+    senderJid: msg.sender,
     senderName: msg.senderName,
     senderPhoneNumber: null,
     timestamp: msg.timestamp,
     messageType: 0,
     isFromMe: msg.isFromMe,
+    chatIsGroupChat: msg.chatId.endsWith("@g.us"),
     hasMedia: msg.attachments.length > 0,
     attachments: msg.attachments.map(
       (att): WhatsAppAttachment => ({

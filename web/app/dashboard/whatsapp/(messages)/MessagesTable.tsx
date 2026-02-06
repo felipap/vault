@@ -64,11 +64,11 @@ export function MessagesTable({
           )
         },
       }),
-      columnHelper.accessor("sender", {
+      columnHelper.accessor("senderJid", {
         header: "Sender",
         size: 140,
         cell: (info) => {
-          const sender = info.getValue()
+          const senderJid = info.getValue()
           const { senderName, isFromMe } = info.row.original
 
           if (isFromMe) {
@@ -80,7 +80,9 @@ export function MessagesTable({
               <span className="truncate text-sm">
                 <Decrypted>{senderName}</Decrypted>
               </span>
-              <span className="truncate text-xs text-zinc-500">{sender}</span>
+              {senderJid && (
+                <span className="truncate text-xs text-zinc-500">{senderJid}</span>
+              )}
             </div>
           )
         },

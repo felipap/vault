@@ -14,7 +14,7 @@ export type WhatsappMessage = {
   chatId: string
   chatName: string | null
   text: string | null
-  sender: string
+  senderJid: string | null
   senderName: string | null
   timestamp: Date
   syncTime: Date
@@ -67,7 +67,7 @@ export async function getWhatsappMessages(
       chatId: true,
       chatName: true,
       text: true,
-      sender: true,
+      senderJid: true,
       senderName: true,
       timestamp: true,
       syncTime: true,
@@ -82,11 +82,11 @@ export async function getWhatsappMessages(
       chatId: m.chatId,
       chatName: m.chatName,
       text: m.text,
-      sender: m.sender,
+      senderJid: m.senderJid,
       senderName: m.senderName,
       timestamp: m.timestamp,
       syncTime: m.syncTime,
-      isFromMe: m.isFromMe === 1,
+      isFromMe: m.isFromMe,
     })),
     total,
     page,
@@ -115,11 +115,11 @@ export async function getWhatsappMessage(id: string): Promise<WhatsappMessageDet
     chatName: message.chatName,
     decryptedChatName: null,
     text: message.text,
-    sender: message.sender,
+    senderJid: message.senderJid,
     senderName: message.senderName,
     timestamp: message.timestamp,
     syncTime: message.syncTime,
-    isFromMe: message.isFromMe === 1,
+    isFromMe: message.isFromMe,
     deviceId: message.deviceId,
     createdAt: message.createdAt,
   }

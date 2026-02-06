@@ -27,7 +27,7 @@ const columns = [
     size: 300,
     cell: ({ row }) => {
       const chat = row.original
-      const isGroup = chat.participantCount > 2
+      const isGroup = chat.isGroupChat
 
       return (
         <div className="flex min-w-0 items-center gap-2">

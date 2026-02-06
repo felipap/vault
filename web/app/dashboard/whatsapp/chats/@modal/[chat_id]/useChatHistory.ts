@@ -9,7 +9,6 @@ import {
 
 export type DecryptedMessage = WhatsappChatMessage & {
   decryptedText: string | null
-  decryptedSenderName: string | null
 }
 
 type UseChatHistoryOptions = {
@@ -39,7 +38,6 @@ export function useChatHistory({
         messages.map(async (msg) => ({
           ...msg,
           decryptedText: await maybeDecrypt(msg.text),
-          decryptedSenderName: await maybeDecrypt(msg.senderName),
         }))
       )
       setDecryptedMessages(decrypted)

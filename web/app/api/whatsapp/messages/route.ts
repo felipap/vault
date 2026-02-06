@@ -32,13 +32,14 @@ const MessageSchema = z.object({
   chatName: encryptedOrEmpty.nullable().optional(),
   chatNameIndex: z.string().nullable().optional(), // HMAC blind index for search
   text: encryptedOrEmpty.nullable(),
-  sender: z.string(),
+  senderJid: z.string().nullable(),
   senderName: encryptedOrEmpty.nullable(),
   senderNameIndex: z.string().nullable().optional(), // HMAC blind index for search
   senderPhoneNumber: encryptedOrEmpty.nullable(),
   senderPhoneNumberIndex: z.string().nullable().optional(), // HMAC blind index for search
   timestamp: z.string(),
   isFromMe: z.boolean(),
+  chatIsGroupChat: z.boolean(),
   attachments: z.array(z.unknown()).optional(), // TODO: implement attachment syncing
 })
 
@@ -265,13 +266,14 @@ function toMessageValues(
     chatName: validMessage.chatName ?? null,
     chatNameIndex: validMessage.chatNameIndex ?? null,
     text: validMessage.text,
-    sender: validMessage.sender,
+    senderJid: validMessage.senderJid,
     senderName: validMessage.senderName,
     senderNameIndex: validMessage.senderNameIndex ?? null,
     senderPhoneNumber: validMessage.senderPhoneNumber ?? null,
     senderPhoneNumberIndex: validMessage.senderPhoneNumberIndex ?? null,
     timestamp: new Date(validMessage.timestamp),
-    isFromMe: validMessage.isFromMe ? 1 : 0,
+    isFromMe: validMessage.isFromMe,
+    isGroupChat: validMessage.chatIsGroupChat,
     deviceId,
     syncTime: new Date(syncTime),
   }

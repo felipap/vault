@@ -2,6 +2,7 @@
 
 import { twMerge } from "tailwind-merge"
 import { LockIcon, LoaderIcon, CheckIcon } from "@/ui/icons"
+import { Decrypted } from "@/ui/Decrypted"
 import { isEncrypted } from "@/lib/encryption"
 import { type WhatsappChatMessage } from "../../actions"
 import { useChatHistory, type DecryptedMessage } from "./useChatHistory"
@@ -72,9 +73,9 @@ function MessageBubble({ message }: { message: DecryptedMessage }) {
             : "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
         )}
       >
-        {!message.isFromMe && (
+        {!message.isFromMe && message.senderName != null && (
           <p className="mb-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
-            {message.decryptedSenderName || message.sender}
+            <Decrypted>{message.senderName}</Decrypted>
           </p>
         )}
         <div className="flex items-start gap-1.5">

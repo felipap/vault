@@ -42,7 +42,7 @@ export function DataTable<TData>({
   return (
     <div className="min-w-0 overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800">
       <table
-        className={tableClassName}
+        className={twMerge("w-full", tableClassName)}
         style={getTdStyle ? { tableLayout: "fixed" } : undefined}
       >
         <thead className="bg-zinc-50 dark:bg-zinc-900">

@@ -86,8 +86,8 @@ async function getLatestChats(
     chat_id: string
     text: string | null
     date: Date | null
-    is_read: number
-    is_from_me: number
+    is_read: boolean
+    is_from_me: boolean
     participant_count: number
     participants: string[]
     message_count: number
@@ -140,8 +140,8 @@ async function getLatestChats(
     isGroupChat: isGroupChat(row.chat_id),
     lastMessageText: row.text,
     lastMessageDate: row.date,
-    lastMessageRead: row.is_read === 1,
-    lastMessageFromMe: row.is_from_me === 1,
+    lastMessageRead: row.is_read,
+    lastMessageFromMe: row.is_from_me,
     participantCount: Number(row.participant_count),
     participants: row.participants,
     messageCount: Number(row.message_count),

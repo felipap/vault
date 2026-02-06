@@ -53,7 +53,7 @@ export async function getChats(
     chat_id: string
     text: string | null
     date: Date | null
-    is_from_me: number
+    is_from_me: boolean
     participant_count: number
     participants: string[]
     message_count: number
@@ -113,7 +113,7 @@ export async function getChats(
       isGroupChat: row.chat_id.startsWith("chat"),
       lastMessageText: row.text,
       lastMessageDate: row.date,
-      lastMessageFromMe: row.is_from_me === 1,
+      lastMessageFromMe: row.is_from_me,
       participantCount: Number(row.participant_count),
       participants: row.participants,
       messageCount: Number(row.message_count),
@@ -215,7 +215,7 @@ export async function getChatWithMessages(
     chat_id: string
     text: string | null
     date: Date | null
-    is_from_me: number
+    is_from_me: boolean
     participant_count: number
     participants: string[]
     message_count: number
@@ -271,8 +271,8 @@ export async function getChatWithMessages(
     text: string | null
     contact: string
     date: Date | null
-    is_from_me: number
-    has_attachments: number
+    is_from_me: boolean
+    has_attachments: boolean
   }>(sql`
     SELECT
       id,
@@ -294,7 +294,7 @@ export async function getChatWithMessages(
     isGroupChat: chatRow.chat_id.startsWith("chat"),
     lastMessageText: chatRow.text,
     lastMessageDate: chatRow.date,
-    lastMessageFromMe: chatRow.is_from_me === 1,
+    lastMessageFromMe: chatRow.is_from_me,
     participantCount: Number(chatRow.participant_count),
     participants: chatRow.participants,
     messageCount: Number(chatRow.message_count),
@@ -304,8 +304,8 @@ export async function getChatWithMessages(
       text: m.text,
       contact: m.contact,
       date: m.date,
-      isFromMe: m.is_from_me === 1,
-      hasAttachments: m.has_attachments === 1,
+      isFromMe: m.is_from_me,
+      hasAttachments: m.has_attachments,
     })),
   }
 }
@@ -335,8 +335,8 @@ export async function getChatMessages(
     text: string | null
     contact: string
     date: Date | null
-    is_from_me: number
-    has_attachments: number
+    is_from_me: boolean
+    has_attachments: boolean
   }>(sql`
     SELECT
       id,
@@ -360,8 +360,8 @@ export async function getChatMessages(
     text: m.text,
     contact: m.contact,
     date: m.date,
-    isFromMe: m.is_from_me === 1,
-    hasAttachments: m.has_attachments === 1,
+    isFromMe: m.is_from_me,
+    hasAttachments: m.has_attachments,
   }))
 
   return {
