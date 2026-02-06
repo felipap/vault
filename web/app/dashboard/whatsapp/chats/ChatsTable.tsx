@@ -1,17 +1,17 @@
 "use client"
 
-import { useRouter } from "next/navigation"
+import { isEncrypted } from "@/lib/encryption"
+import { ContactAvatar } from "@/ui/ContactAvatar"
 import { LockIcon } from "@/ui/icons"
 import { Pagination } from "@/ui/Pagination"
-import { ContactAvatar } from "@/ui/ContactAvatar"
-import { type WhatsappChat } from "./actions"
-import { isEncrypted } from "@/lib/encryption"
 import {
   createColumnHelper,
   flexRender,
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table"
+import { useRouter } from "next/navigation"
+import { type WhatsappChat } from "./actions"
 
 export type DecryptedChat = WhatsappChat & {
   decryptedChatName: string | null
@@ -35,6 +35,9 @@ const columns = [
           <ContactAvatar name={displayName} isGroup={isGroup} />
           <div className="flex min-w-0 flex-col">
             <span className="truncate text-sm font-medium">{displayName}</span>
+            <span className="truncate text-xs text-zinc-500">
+              {chat.chatId}
+            </span>
             {isGroup && (
               <span className="text-xs text-zinc-500">
                 {chat.participantCount} participants

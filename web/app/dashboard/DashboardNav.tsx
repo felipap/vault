@@ -7,6 +7,7 @@ import {
   setEncryptionKey,
 } from "@/lib/encryption"
 import { LockIcon, MoonIcon, SunIcon, UnlockIcon } from "@/ui/icons"
+import { type Route } from "next"
 import Link from "next/link"
 import { usePathname, useSearchParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -20,7 +21,7 @@ const NAV_ITEMS = [
   { href: "/dashboard/whatsapp", label: "WhatsApp" },
   { href: "/dashboard/contacts", label: "Contacts" },
   { href: "/dashboard/locations", label: "Locations" },
-]
+] as const
 
 export function DashboardNav() {
   const pathname = usePathname()
@@ -101,7 +102,7 @@ function EncryptionKeyButton() {
       const newUrl = newParams.toString()
         ? `${pathname}?${newParams.toString()}`
         : pathname
-      router.replace(newUrl)
+      router.replace(newUrl as Route)
     }
   }, [searchParams, router, pathname])
 

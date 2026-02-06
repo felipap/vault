@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
   experimental: {
     middlewareClientMaxBodySize: "100mb",
   },
+  typedRoutes: true,
 }
 
 export default nextConfig

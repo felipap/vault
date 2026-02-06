@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { type Route } from "next"
 import { useEffect, useState } from "react"
 import { ActivityLogs } from "./ActivityLogs"
 import { getDashboardStats, type DashboardStats } from "./actions"
@@ -18,7 +19,7 @@ function formatBytes(bytes: number): string {
 type StatCardProps = {
   label: string
   value: string
-  href: string
+  href: Route
 }
 
 function StatCard({ label, value, href }: StatCardProps) {

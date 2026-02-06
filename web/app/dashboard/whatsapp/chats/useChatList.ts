@@ -51,10 +51,10 @@ export function useChatList(options: UseChatListOptions = {}) {
     load()
   }, [page, pageSize, search, decryptChats])
 
-  function handleSearchChange(value: string) {
+  const handleSearchChange = useCallback((value: string) => {
     setSearch(value)
     setPage(1)
-  }
+  }, [])
 
   return {
     chats,

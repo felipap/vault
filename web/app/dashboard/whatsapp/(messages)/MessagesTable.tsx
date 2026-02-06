@@ -53,7 +53,10 @@ export function MessagesTable({
           return (
             <div className="flex items-center gap-2">
               <WhatsappIcon />
-              <span className="text-sm">{displayName}</span>
+              <div className="flex min-w-0 flex-col">
+                <span className="truncate text-sm">{displayName}</span>
+                <span className="truncate text-xs text-zinc-500">{chatId}</span>
+              </div>
             </div>
           )
         },
@@ -71,8 +74,9 @@ export function MessagesTable({
           const displayName = decryptedSenderName || sender
 
           return (
-            <div className="flex flex-col">
-              <span className="text-sm">{displayName}</span>
+            <div className="flex min-w-0 flex-col">
+              <span className="truncate text-sm">{displayName}</span>
+              <span className="truncate text-xs text-zinc-500">{sender}</span>
             </div>
           )
         },
@@ -84,7 +88,9 @@ export function MessagesTable({
       columnHelper.accessor(sortBy === "syncTime" ? "syncTime" : "timestamp", {
         id: "dateColumn",
         header: sortBy === "syncTime" ? "Received" : "Message Date",
-        cell: (info) => <DateCell message={info.row.original} sortBy={sortBy} />,
+        cell: (info) => (
+          <DateCell message={info.row.original} sortBy={sortBy} />
+        ),
       }),
     ],
     [sortBy]
@@ -161,8 +167,10 @@ function DateCell({
   message: DecryptedMessage
   sortBy: SortBy
 }) {
-  const primaryDate = sortBy === "syncTime" ? message.syncTime : message.timestamp
-  const secondaryDate = sortBy === "syncTime" ? message.timestamp : message.syncTime
+  const primaryDate =
+    sortBy === "syncTime" ? message.syncTime : message.timestamp
+  const secondaryDate =
+    sortBy === "syncTime" ? message.timestamp : message.syncTime
   const secondaryLabel = sortBy === "syncTime" ? "sent" : "received"
 
   return (

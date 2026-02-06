@@ -16,3 +16,10 @@ Authorization: Bearer {{readSecret}}
 
 GET {{host}}/api/whatsapp/latest?within_min=60
 Authorization: Bearer {{readSecret}}
+
+###
+
+GET {{host}}/api/whatsapp/chats/search?phone=5545999551968
+Authorization: Bearer {{readSecret}}
+
+####

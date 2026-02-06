@@ -10,7 +10,7 @@ import { deleteAllIMessages } from "./(messages)/actions"
 const subTabs = [
   { href: "/dashboard/imessages", label: "Messages" },
   { href: "/dashboard/imessages/chats", label: "Chats" },
-]
+] as const
 
 export function IMessagesNav() {
   const pathname = usePathname()

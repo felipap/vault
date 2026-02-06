@@ -10,7 +10,7 @@ import { deleteAllWhatsappMessages } from "./(messages)/actions"
 const subTabs = [
   { href: "/dashboard/whatsapp", label: "Messages" },
   { href: "/dashboard/whatsapp/chats", label: "Chats" },
-]
+] as const
 
 export function WhatsappNav() {
   const pathname = usePathname()
