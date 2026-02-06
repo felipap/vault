@@ -2,16 +2,15 @@
 
 import { isEncrypted } from "@/lib/encryption"
 import { ContactAvatar } from "@/ui/ContactAvatar"
+import { DataTable } from "@/ui/DataTable"
 import { Decrypted } from "@/ui/Decrypted"
 import { LockIcon } from "@/ui/icons"
 import { Pagination } from "@/ui/Pagination"
 import {
   createColumnHelper,
-  flexRender,
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import { useRouter } from "next/navigation"
 import { type WhatsappChat } from "./actions"
 
 export type DecryptedChat = WhatsappChat & {
@@ -120,8 +119,6 @@ type Props = {
 }
 
 export function ChatsTable({ chats, page, totalPages, onPageChange }: Props) {
-  const router = useRouter()
-
   const table = useReactTable({
     data: chats,
     columns,
@@ -131,59 +128,18 @@ export function ChatsTable({ chats, page, totalPages, onPageChange }: Props) {
 
   return (
     <>
-      <div className="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800">
-        <table className="w-full table-fixed">
-          <thead className="bg-zinc-50 dark:bg-zinc-900">
-            {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    className="px-4 py-3 text-left text-sm font-medium text-zinc-500"
-                    style={{
-                      maxWidth: header.column.getSize(),
-                      width: header.column.getSize(),
-                    }}
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody className="divide-y divide-zinc-200 bg-white dark:divide-zinc-800 dark:bg-zinc-950">
-            {table.getRowModel().rows.map((row) => (
-              <tr
-                key={row.id}
-                onClick={() =>
-                  router.push(
-                    `/dashboard/whatsapp/chats/${encodeURIComponent(row.original.chatId)}`
-                  )
-                }
-                className="cursor-pointer transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900"
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <td
-                    key={cell.id}
-                    className="overflow-hidden px-4 py-3 text-sm"
-                    style={{
-                      maxWidth: cell.column.getSize(),
-                      width: cell.column.getSize(),
-                    }}
-                  >
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        table={table}
+        getRowHref={(row) =>
+          `/dashboard/whatsapp/chats/${encodeURIComponent(row.original.chatId)}`
+        }
+        tableClassName="w-full table-fixed"
+        getTdClassName={() => "overflow-hidden"}
+        getTdStyle={(cell) => ({
+          maxWidth: cell.column.getSize(),
+          width: cell.column.getSize(),
+        })}
+      />
 
       <Pagination
         page={page}
