@@ -10,6 +10,7 @@ the place for AI slop, or legaleeze.
 - [Server security](#server-security)
 - [End-to-End Encryption (E2EE)](#end-to-end-encryption-e2ee)
   - [Encryption Key Management](#encryption-key-management)
+  - [Blind Indexing for Search](#blind-indexing-for-search)
 - [Rate Limiting](#rate-limiting)
 
 ## Authentication
@@ -82,7 +83,43 @@ The server has no way to decrypt your data. If you lose your encryption key, you
 
 - Is PBKDF2 with 100k iterations still considered good? (Argon2 is "better" but more complex)
 - Should we ever implement key rotation, or is "re-encrypt everything" fine for a personal tool?
-- Do we need to encrypt more fields? (e.g., contact phone numbers are currently plaintext for querying)
+
+### Blind Indexing for Search
+
+The encryption uses random IVs, so the same plaintext encrypted twice produces different ciphertexts. This is a security feature (prevents pattern detection) but makes server-side search impossible.
+
+**Solution: HMAC blind indexes**
+
+For fields that need to be searchable, we store a deterministic HMAC alongside the encrypted value:
+
+```
+senderPhoneNumber: "enc:v1:..."      // encrypted (different every time)
+senderPhoneNumberIndex: "a3f8c2..."  // HMAC (same input → same output)
+```
+
+The HMAC is computed using:
+
+- HMAC-SHA256
+- Key derived via PBKDF2 with a separate salt (`contexter-search-index-v1`)
+- Same passphrase as encryption
+
+**How search works:**
+
+1. Client computes HMAC of search term using their passphrase
+2. Client sends the HMAC to the server (not the plaintext)
+3. Server matches against the index column
+
+**Limitations:**
+
+- Only exact matches work (no partial/fuzzy search)
+- Phone numbers must be normalized consistently on both sides
+- Adding a searchable field requires schema change + backfill from desktop app
+
+**Currently indexed fields (WhatsApp):**
+
+- `chatNameIndex`
+- `senderNameIndex`
+- `senderPhoneNumberIndex`
 
 ## Rate Limiting
 
