@@ -4,6 +4,7 @@
 import {
   createCipheriv,
   createDecipheriv,
+  createHmac,
   pbkdf2Sync,
   randomBytes,
 } from 'crypto'
@@ -254,7 +255,6 @@ export function computeSearchIndex(
     return ''
   }
 
-  const { createHmac } = require('crypto')
   const key = deriveIndexKey(passphrase)
   const hmac = createHmac('sha256', key)
   hmac.update(plaintext)
