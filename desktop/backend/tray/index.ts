@@ -158,7 +158,7 @@ function updateTrayMenu(): void {
     },
     { type: 'separator' },
     {
-      label: 'Open Dashboard',
+      label: `Open Dashboard ${app.isPackaged ? '' : '(DEV)'}`,
       enabled: canOpenDashboard,
       click: () => {
         if (serverUrl && encryptionKey) {

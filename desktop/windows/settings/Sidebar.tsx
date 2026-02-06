@@ -1,3 +1,9 @@
+import {
+  ContactsIcon,
+  IMessageIcon,
+  ScreenCaptureIcon,
+  WhatsappIcon,
+} from '../shared/ui/icons'
 import { SyncLogSource } from '../electron'
 
 export type ActiveTab = 'general' | 'logs' | 'mcp' | SyncLogSource
@@ -16,23 +22,36 @@ type Props = {
   disabledSources: DataSourceInfo[]
 }
 
+const SYNC_SOURCE_ICONS: Record<
+  SyncLogSource,
+  React.ComponentType<{ size?: number; className?: string }>
+> = {
+  screenshots: ScreenCaptureIcon,
+  imessage: IMessageIcon,
+  contacts: ContactsIcon,
+  'whatsapp-sqlite': WhatsappIcon,
+  'whatsapp-unipile': WhatsappIcon,
+}
+
 function SidebarButton({
   active,
   onClick,
   children,
   disabled,
   hasError,
+  icon: Icon,
 }: {
   active: boolean
   onClick: () => void
   children: React.ReactNode
   disabled?: boolean
   hasError?: boolean
+  icon?: React.ComponentType<{ size?: number; className?: string }>
 }) {
   return (
     <button
       onClick={onClick}
-      className={`w-full px-3 py-2 text-sm text-left rounded-md transition-colors flex items-center justify-between ${
+      className={`w-full px-3 py-2 text-sm text-left rounded-md transition-colors flex items-center justify-between gap-2 ${
         active
           ? 'bg-blue-500 text-white'
           : disabled
@@ -40,7 +59,10 @@ function SidebarButton({
             : 'text-[var(--color-contrast)] hover:bg-[var(--background-color-three)]'
       }`}
     >
-      <span>{children}</span>
+      <span className="flex items-center gap-2 min-w-0">
+        {Icon && <Icon size={16} className="shrink-0" />}
+        {children}
+      </span>
       {hasError && !active && (
         <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" />
       )}
@@ -98,6 +120,7 @@ export function Sidebar({
                   active={activeTab === info.source}
                   onClick={() => onSelectTab(info.source)}
                   hasError={info.lastSyncFailed}
+                  icon={SYNC_SOURCE_ICONS[info.source]}
                 >
                   {info.label}
                 </SidebarButton>
@@ -116,6 +139,7 @@ export function Sidebar({
                   active={activeTab === info.source}
                   onClick={() => onSelectTab(info.source)}
                   disabled
+                  icon={SYNC_SOURCE_ICONS[info.source]}
                 >
                   {info.label}
                 </SidebarButton>

@@ -47,6 +47,7 @@ export interface BackfillProgress {
   current: number
   total: number
   messageCount?: number
+  itemsUploaded?: number
   error?: string
 }
 

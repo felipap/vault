@@ -106,11 +106,13 @@ export function SyncTab({
 }: SyncTabProps) {
   return (
     <div className="space-y-6">
-      <h2 className="text-lg font-semibold">{title}</h2>
-      <div className="max-w-lg space-y-4">
-        <p className="text-sm text-secondary">{description}</p>
-        {children}
-      </div>
+      <header>
+        <h2 className="text-lg font-semibold">{title}</h2>
+        <div className="max-w-lg space-y-4">
+          <p className="text-sm text-secondary">{description}</p>
+          {children}
+        </div>
+      </header>
       {footer && <div className="border-t pt-6">{footer}</div>}
     </div>
   )
