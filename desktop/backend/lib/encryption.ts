@@ -178,7 +178,7 @@ export function encryptBuffer(plainBuffer: Buffer, passphrase: string): Buffer {
   const authTag = cipher.getAuthTag()
 
   // Format: 4-byte magic + 1-byte version + 12-byte IV + 16-byte authTag + ciphertext
-  const MAGIC = Buffer.from('CTXE') // "Context Encrypted"
+  const MAGIC = Buffer.from('CTXE') // "Vaulty Encrypted"
   const VERSION = Buffer.from([0x01])
 
   return Buffer.concat([MAGIC, VERSION, iv, authTag, encrypted])

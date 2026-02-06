@@ -254,8 +254,8 @@
     <script type="module">
       const previewCanvas = document.getElementById('previewCanvas')
       const actualCanvas = document.getElementById('actualSizeCanvas')
-      const previewCtx = previewCanvas.getContext('2d')
-      const actualCtx = actualCanvas.getContext('2d')
+      const previewCtx = previewCanvas.getVaulty('2d')
+      const actualCtx = actualCanvas.getVaulty('2d')
 
       const titleEl = document.getElementById('title')
       const animationFile = document.getElementById('animationFile')
@@ -373,7 +373,7 @@
           canvas.height = 30
           canvas.className = 'frame-thumb'
 
-          const ctx = canvas.getContext('2d')
+          const ctx = canvas.getVaulty('2d')
           const deform = currentAnimation.getDeformForFrame(
             i,
             totalFrames,
@@ -400,7 +400,7 @@
           canvas.width = 30
           canvas.height = 30
 
-          const ctx = canvas.getContext('2d')
+          const ctx = canvas.getVaulty('2d')
           const deform = currentAnimation.getDeformForFrame(
             i,
             totalFrames,

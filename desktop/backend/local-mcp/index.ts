@@ -7,6 +7,7 @@ import { z } from 'zod'
 import { createLogger } from '../lib/logger'
 import { fetchContacts } from '../sources/contacts'
 import { createIMessageSDK, fetchMessages } from '../sources/imessage'
+import { fetchStickies } from '../sources/stickies'
 
 const log = createLogger('mcp')
 
@@ -124,6 +125,42 @@ function setupMcpServer(): McpServer {
           {
             type: 'text' as const,
             text: JSON.stringify(result, null, 2),
+          },
+        ],
+      }
+    },
+  )
+
+  // ============================================================================
+  // Stickies Tools
+  // ============================================================================
+
+  mcp.tool(
+    'get_stickies',
+    'Get all stickies from the macOS Stickies app (read from the file system)',
+    {
+      search: z
+        .string()
+        .optional()
+        .describe('Optional search term to filter stickies by text content'),
+    },
+    async ({ search }) => {
+      log.info('get_stickies called', { search })
+      const stickies = fetchStickies()
+
+      let filtered = stickies
+      if (search) {
+        const term = search.toLowerCase()
+        filtered = stickies.filter((s) =>
+          s.text.toLowerCase().includes(term),
+        )
+      }
+
+      return {
+        content: [
+          {
+            type: 'text' as const,
+            text: JSON.stringify(filtered, null, 2),
           },
         ],
       }

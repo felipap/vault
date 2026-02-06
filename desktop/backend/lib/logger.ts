@@ -5,7 +5,7 @@ const isDev = !app.isPackaged
 
 // app.setName() MUST be called before log.initialize(). It sets where
 // electron-log writes files AND where electron-store saves data.
-const expectedName = `Context${isDev ? 'Dev' : ''}`
+const expectedName = `Vaulty${isDev ? 'Dev' : ''}`
 app.setName(expectedName)
 
 log.initialize()
@@ -45,7 +45,13 @@ if (isDev) {
 
   log.transports.console.transforms = [
     maxDepth,
-    ({ data, message }: { data: unknown[]; message: { scope?: string; level?: string } }) => {
+    ({
+      data,
+      message,
+    }: {
+      data: unknown[]
+      message: { scope?: string; level?: string }
+    }) => {
       const scopeName = message.scope || 'main'
       const level = message.level || 'info'
       const scopeColor = SCOPE_COLORS[scopeName] || '\x1b[37m'
@@ -58,7 +64,11 @@ if (isDev) {
       const levelColor = levelColors[level] || ''
 
       // Prepend colored scope, let console.log handle the rest naturally
-      return [`${scopeColor}[${scopeName}]${RESET}${levelColor}`, ...data, RESET]
+      return [
+        `${scopeColor}[${scopeName}]${RESET}${levelColor}`,
+        ...data,
+        RESET,
+      ]
     },
   ]
 }

@@ -59,7 +59,7 @@ log.info('App version:', app.isPackaged ? app.getVersion() : '(not available)')
 // }
 
 app.setAboutPanelOptions({
-  applicationName: `Contexter ${app.isPackaged ? '' : '(dev)'}`,
+  applicationName: `Vaulty ${app.isPackaged ? '' : '(dev)'}`,
   copyright: 'Copyright © 2025',
   version: app.getVersion(),
 })

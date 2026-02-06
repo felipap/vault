@@ -111,7 +111,7 @@ export function GeneralSettings() {
           <span className="text-sm">Start on login</span>
         </label>
         <p className="text-xs text-secondary mt-1 ml-7">
-          Automatically start Contexter when you log in to your computer
+          Automatically start Vaulty when you log in to your computer
         </p>
         <p className="text-xs text-secondary mt-4">Version {appVersion}</p>
       </div>

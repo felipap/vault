@@ -51,7 +51,7 @@ function createTrayIcon(): Tray {
   trayIcon.setTemplateImage(true)
 
   tray = new Tray(trayIcon)
-  tray.setToolTip('Context')
+  tray.setToolTip('Vaulty')
 
   updateTrayMenu()
 
