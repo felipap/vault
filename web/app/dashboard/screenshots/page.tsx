@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from "react"
 import {
-  getScreenshots,
   getScreenshotRetentionHours,
+  getScreenshots,
   type Screenshot,
 } from "./actions"
-import { ScreenshotsTable } from "./ScreenshotsTable"
 import { ScreenshotPreview } from "./ScreenshotPreview"
+import { ScreenshotsTable } from "./ScreenshotsTable"
+
+const IS_DEV = process.env.NODE_ENV === "development"
 
 function formatRetention(hours: number): string {
   if (hours < 24) {
@@ -72,7 +74,7 @@ export default function Page() {
               <code className="bg-zinc-100 dark:bg-zinc-800 px-1 py-0.5 rounded text-xs">
                 SCREENSHOT_RETENTION_HOURS
               </code>{" "}
-              env var to change)
+              env var to change) {IS_DEV ? "(inactive in dev)" : ""}
             </p>
           )}
         </div>
