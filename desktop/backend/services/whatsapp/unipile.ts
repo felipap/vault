@@ -90,7 +90,7 @@ async function exportAndUpload(): Promise<void> {
 
   await yieldToEventLoop()
 
-  const stopAnimating = startAnimating('old')
+  const stopAnimating = startAnimating('vault-rotation')
 
   for (let i = 0; i < messages.length; i += BATCH_SIZE) {
     const batch = messages.slice(i, i + BATCH_SIZE)

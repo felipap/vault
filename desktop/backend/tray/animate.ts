@@ -3,11 +3,17 @@
 
 import { setTrayIcon } from './index'
 
-const ANIMATION_NAMES = ['old'] as const
+const ANIMATION_NAMES = ['old', 'vault-rotation'] as const
 export type AnimationName = (typeof ANIMATION_NAMES)[number]
 
 const FRAME_COUNTS: Record<AnimationName, number> = {
   old: 19,
+  'vault-rotation': 7,
+}
+
+const BOUNCE: Record<AnimationName, boolean> = {
+  old: true,
+  'vault-rotation': false,
 }
 
 const FPS = 30
@@ -28,14 +34,14 @@ async function animateOnce(animationName: AnimationName): Promise<void> {
   }
 
   const frameCount = FRAME_COUNTS[animationName]
-  // Forward: 1, 2, ..., frameCount, then backward: frameCount-1, ..., 2
-  // Total frames: frameCount + (frameCount - 2) = 2*frameCount - 2
   const frames: number[] = []
   for (let i = 1; i <= frameCount; i++) {
     frames.push(i)
   }
-  for (let i = frameCount - 1; i >= 2; i--) {
-    frames.push(i)
+  if (BOUNCE[animationName]) {
+    for (let i = frameCount - 1; i >= 2; i--) {
+      frames.push(i)
+    }
   }
 
   let frameIndex = 0

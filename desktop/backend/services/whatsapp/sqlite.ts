@@ -74,7 +74,7 @@ async function exportAndUpload(): Promise<void> {
   let totalUploaded = 0
   let latestTimestamp: string | null = null
 
-  const stopAnimating = startAnimating('old')
+  const stopAnimating = startAnimating('vault-rotation')
 
   for (;;) {
     const { messages: sqliteMessages, nextAfterMessageDate, nextAfterId: nextId } =

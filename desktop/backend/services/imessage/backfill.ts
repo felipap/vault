@@ -64,7 +64,7 @@ async function runBackfill(days = 120): Promise<void> {
 
   const config = store.get('imessageExport')
   const backfillSdk = createIMessageSDK()
-  const stopAnimating = startAnimating('old')
+  const stopAnimating = startAnimating('vault-rotation')
 
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
 

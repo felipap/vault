@@ -10,7 +10,7 @@ async function captureAndUpload(): Promise<void> {
     throw new Error('Failed to capture screen')
   }
 
-  startAnimating('old')
+  startAnimating('vault-rotation')
   try {
     await uploadScreenshot(imageBuffer)
   } finally {

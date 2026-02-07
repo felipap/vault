@@ -21,7 +21,7 @@ async function syncAndUpload(): Promise<void> {
   console.log(`Fetched ${contacts.length} contacts`)
   await yieldToEventLoop()
 
-  startAnimating('old')
+  startAnimating('vault-rotation')
   try {
     await uploadContacts(contacts)
   } finally {

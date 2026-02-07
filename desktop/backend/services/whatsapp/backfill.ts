@@ -69,7 +69,7 @@ async function runBackfill(days = 120): Promise<void> {
 
   console.log(`[whatsapp] Starting backfill for ${days} days`)
 
-  const stopAnimating = startAnimating('old')
+  const stopAnimating = startAnimating('vault-rotation')
   let db: ReturnType<typeof openWhatsAppDatabase> | null = null
 
   try {
