@@ -1,4 +1,4 @@
-import { ipcMain, shell, systemPreferences, app } from 'electron'
+import { ipcMain, shell, systemPreferences, app, dialog } from 'electron'
 import * as fs from 'fs'
 import * as os from 'os'
 import * as path from 'path'
@@ -19,6 +19,7 @@ import {
 
 const CONFIG_KEY_TO_SERVICE: Record<ServiceConfigKey, string> = {
   screenCapture: 'screenshots',
+  screenCaptureLocal: 'screenshots-local',
   imessageExport: 'imessage',
   appleContactsSync: 'apple-contacts',
   whatsappSqlite: 'whatsapp-sqlite',
@@ -183,5 +184,19 @@ export function registerIpcHandlers(): void {
   // Utility
   ipcMain.handle('open-url', (_event, url: string) => {
     shell.openExternal(url)
+  })
+
+  ipcMain.handle('select-folder', async () => {
+    const result = await dialog.showOpenDialog({
+      properties: ['openDirectory', 'createDirectory'],
+    })
+    if (result.canceled || result.filePaths.length === 0) {
+      return null
+    }
+    return result.filePaths[0]
+  })
+
+  ipcMain.handle('open-path', (_event, target: string) => {
+    shell.openPath(target)
   })
 }

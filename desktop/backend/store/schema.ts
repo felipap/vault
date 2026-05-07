@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto'
 
 export type SyncLogSource =
   | 'screenshots'
+  | 'screenshots-local'
   | 'imessage'
   | 'apple-contacts'
   | 'whatsapp-sqlite'
@@ -30,6 +31,12 @@ export type StoreSchema = {
     enabled: boolean
     intervalMinutes: number
     nextSyncAfter: string | null
+  }
+  screenCaptureLocal: {
+    enabled: boolean
+    intervalMinutes: number
+    nextSyncAfter: string | null
+    outputFolder: string | null
   }
   imessageExport: {
     enabled: boolean
@@ -90,6 +97,12 @@ export const DEFAULT_STATE: StoreSchema = {
     enabled: false,
     intervalMinutes: 5,
     nextSyncAfter: null,
+  },
+  screenCaptureLocal: {
+    enabled: false,
+    intervalMinutes: 5,
+    nextSyncAfter: null,
+    outputFolder: null,
   },
   imessageExport: {
     enabled: false,

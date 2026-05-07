@@ -16,6 +16,7 @@ export type Service = {
 
 import { createLogger } from '../lib/logger'
 import { screenshotsService } from './screenshots'
+import { screenshotsLocalService } from './screenshots-local'
 import { imessageService } from './imessage'
 import { iContactsService } from './apple-contacts'
 import { whatsappSqliteService } from './whatsapp'
@@ -32,6 +33,7 @@ const isWindows = process.platform === 'win32'
 
 export const SERVICES: Service[] = [
   screenshotsService,
+  screenshotsLocalService,
   whatsappSqliteService,
   readJobsService,
   ...(isMac
@@ -68,6 +70,7 @@ export function getService(name: string): Service | undefined {
 
 export {
   screenshotsService,
+  screenshotsLocalService,
   imessageService,
   iContactsService as contactsService,
   whatsappSqliteService,

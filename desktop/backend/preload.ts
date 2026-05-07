@@ -65,6 +65,8 @@ const api = {
 
   // Utility
   openUrl: (url: string) => ipcRenderer.invoke('open-url', url),
+  selectFolder: () => ipcRenderer.invoke('select-folder'),
+  openPath: (target: string) => ipcRenderer.invoke('open-path', target),
 } satisfies ElectronAPI
 
 contextBridge.exposeInMainWorld('electron', api)

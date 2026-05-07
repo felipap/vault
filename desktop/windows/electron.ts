@@ -6,6 +6,7 @@ export type {
   ServiceConfigMap,
   IMessageExportConfig,
   WriteJobsConfig,
+  ScreenCaptureLocalConfig,
   ServiceStatus,
   BackfillProgress,
   ElectronAPI,

@@ -26,6 +26,7 @@ const WAKE_WARNING_MS = 2 * 60 * 1000
 
 const SERVICE_LABELS: Record<string, string> = {
   screenshots: 'Screenshots',
+  'screenshots-local': 'Screenshots (Local)',
   imessage: 'iMessage',
   contacts: 'Contacts',
 }

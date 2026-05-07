@@ -4,6 +4,7 @@ import { LogsTab } from './log-viewer/LogsTab'
 import { Onboarding } from './Onboarding/index'
 import { Sidebar, ActiveTab, DataSourceInfo } from './Sidebar'
 import { ScreenshotsSyncTab } from './sync-tabs/screenshots'
+import { ScreenshotsLocalSyncTab } from './sync-tabs/screenshots-local'
 import { IMessageSyncTab } from './sync-tabs/imessage'
 import { ContactsSyncTab } from './sync-tabs/contacts'
 import { WhatsappSqliteSyncTab } from './sync-tabs/whatsapp-sqlite'
@@ -68,6 +69,7 @@ function SettingsPanel() {
     async function loadDataSources() {
       const [
         screenshots,
+        screenshotsLocal,
         imessage,
         contacts,
         whatsappSqlite,
@@ -78,6 +80,7 @@ function SettingsPanel() {
         syncLogs,
       ] = await Promise.all([
         window.electron.getServiceConfig('screenCapture'),
+        window.electron.getServiceConfig('screenCaptureLocal'),
         window.electron.getServiceConfig('imessageExport'),
         window.electron.getServiceConfig('appleContactsSync'),
         window.electron.getServiceConfig('whatsappSqlite'),
@@ -106,6 +109,12 @@ function SettingsPanel() {
           label: SOURCE_LABELS['screenshots'],
           enabled: screenshots.enabled,
           lastSyncFailed: lastSyncStatus['screenshots'] ?? false,
+        },
+        {
+          source: 'screenshots-local',
+          label: SOURCE_LABELS['screenshots-local'],
+          enabled: screenshotsLocal.enabled,
+          lastSyncFailed: lastSyncStatus['screenshots-local'] ?? false,
         },
         {
           source: 'whatsapp-sqlite',
@@ -234,6 +243,14 @@ function SettingsPanel() {
           <ScreenshotsSyncTab
             onEnabledChange={(enabled) =>
               handleSourceEnabledChange('screenshots', enabled)
+            }
+            highlightSyncId={highlightSyncId}
+          />
+        )}
+        {activeTab === 'screenshots-local' && (
+          <ScreenshotsLocalSyncTab
+            onEnabledChange={(enabled) =>
+              handleSourceEnabledChange('screenshots-local', enabled)
             }
             highlightSyncId={highlightSyncId}
           />

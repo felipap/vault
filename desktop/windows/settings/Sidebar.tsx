@@ -4,6 +4,7 @@ import {
   VscComment,
   VscCommentDiscussion,
   VscDeviceCamera,
+  VscFolder,
   VscNote,
   VscNotebook,
   VscOrganization,
@@ -31,6 +32,7 @@ type Props = {
 
 const SYNC_SOURCE_ICONS: Record<SyncLogSource, IconType> = {
   screenshots: VscDeviceCamera,
+  'screenshots-local': VscFolder,
   imessage: VscComment,
   contacts: VscOrganization,
   'whatsapp-sqlite': VscCommentDiscussion,

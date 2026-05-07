@@ -1,5 +1,6 @@
 export type SyncLogSource =
   | 'screenshots'
+  | 'screenshots-local'
   | 'imessage'
   | 'contacts'
   | 'whatsapp-sqlite'
@@ -10,6 +11,7 @@ export type SyncLogSource =
 
 export const SOURCE_LABELS: Record<SyncLogSource, string> = {
   screenshots: 'Screen Capture',
+  'screenshots-local': 'Screenshots (Local)',
   imessage: 'macOS Messages',
   contacts: 'macOS Contacts',
   'whatsapp-sqlite': 'WhatsApp',
@@ -46,8 +48,13 @@ export interface WriteJobsConfig extends ServiceConfig {
   allowedRecipients: string[]
 }
 
+export interface ScreenCaptureLocalConfig extends ServiceConfig {
+  outputFolder: string | null
+}
+
 export type ServiceConfigMap = {
   screenCapture: ServiceConfig
+  screenCaptureLocal: ScreenCaptureLocalConfig
   imessageExport: IMessageExportConfig
   appleContactsSync: ServiceConfig
   whatsappSqlite: WhatsappSqliteConfig
@@ -133,4 +140,6 @@ export interface ElectronAPI {
 
   // Utility
   openUrl: (url: string) => Promise<void>
+  selectFolder: () => Promise<string | null>
+  openPath: (target: string) => Promise<void>
 }

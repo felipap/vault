@@ -20,12 +20,20 @@ type SchedulerOptions = {
   onSync: () => Promise<SyncResult>
   onStart?: () => void
   onStop?: () => void
+  requiresEncryption?: boolean
 }
 
 export function createScheduledWriteService(
   options: SchedulerOptions,
 ): Service {
-  const { name, configKey, onSync, onStart, onStop } = options
+  const {
+    name,
+    configKey,
+    onSync,
+    onStart,
+    onStop,
+    requiresEncryption = true,
+  } = options
   const log = createLogger(name)
 
   let interval: NodeJS.Timeout | null = null
@@ -37,18 +45,20 @@ export function createScheduledWriteService(
     const startTime = Date.now()
 
     // Check for encryption key before syncing
-    const encryptionKey = getEncryptionKey()
-    if (!encryptionKey) {
-      log.info('Skipping sync: encryption key not set')
-      lastSyncStatus = 'error'
-      lastFailedSyncId = addSyncLog({
-        timestamp: startTime,
-        source: name,
-        status: 'error',
-        errorMessage: 'Encryption key not set',
-        duration: Date.now() - startTime,
-      })
-      return
+    if (requiresEncryption) {
+      const encryptionKey = getEncryptionKey()
+      if (!encryptionKey) {
+        log.info('Skipping sync: encryption key not set')
+        lastSyncStatus = 'error'
+        lastFailedSyncId = addSyncLog({
+          timestamp: startTime,
+          source: name,
+          status: 'error',
+          errorMessage: 'Encryption key not set',
+          duration: Date.now() - startTime,
+        })
+        return
+      }
     }
 
     startAnimating('vault-rotation')
@@ -191,9 +201,11 @@ export function createScheduledWriteService(
       throw new Error(`${name} is disabled`)
     }
 
-    const encryptionKey = getEncryptionKey()
-    if (!encryptionKey) {
-      throw new MissingEncryptionKeyError()
+    if (requiresEncryption) {
+      const encryptionKey = getEncryptionKey()
+      if (!encryptionKey) {
+        throw new MissingEncryptionKeyError()
+      }
     }
 
     await runSync()
