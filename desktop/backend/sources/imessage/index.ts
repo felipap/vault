@@ -70,8 +70,13 @@ export async function fetchMessages(
     const attachments: Attachment[] = []
 
     if (includeAttachments) {
-      // Only process image attachments - skip videos and other large files
-      const imageAttachments = msg.attachments.filter((att) => att.isImage)
+      // Only process image attachments - skip videos and other large files.
+      // Some attachments come back with an empty path when the underlying
+      // file was deleted or never downloaded; skip those without trying to
+      // open '' (which would fail with ENOENT and spam the logs).
+      const imageAttachments = msg.attachments.filter(
+        (att) => att.isImage && att.path,
+      )
 
       for (const att of imageAttachments) {
         const readResult = await readAttachmentAsBase64(att.path, att.isImage)
