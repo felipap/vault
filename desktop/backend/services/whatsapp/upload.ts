@@ -43,9 +43,12 @@ export async function uploadWhatsAppMessages(
       deviceId: getDeviceId(),
       messageCount: messages.length,
     },
+    // Server middleware gates /api/* POSTs with API_WRITE_SECRET.
+    useWriteSecret: true,
   })
 
   if ('error' in result) {
+    log.error('Upload to /api/whatsapp/messages failed:', result.error.slice(0, 1000))
     return { error: result.error }
   }
 

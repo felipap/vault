@@ -97,6 +97,7 @@ export async function encryptAndUpload<T extends JsonObject>({
   batchSize,
   extraBody,
   preprocess,
+  useWriteSecret = false,
 }: {
   items: T[]
   config: SyncConfig
@@ -105,6 +106,7 @@ export async function encryptAndUpload<T extends JsonObject>({
   batchSize?: number
   extraBody?: Record<string, unknown>
   preprocess?: (items: T[], encryptionKey: string) => T[]
+  useWriteSecret?: boolean
 }): Promise<UploadResult> {
   if (items.length === 0) {
     return { count: 0 }
@@ -118,19 +120,36 @@ export async function encryptAndUpload<T extends JsonObject>({
   const preprocessed = preprocess ? preprocess(items, encryptionKey) : items
   const encrypted = encryptItems(preprocessed, config, encryptionKey)
 
+  // Propagate apiRequest's HTTP-error return up through the result so callers
+  // (and their cursor-advance logic) can halt on auth/validation failures.
+  // Discarding the response lets HTTP 401s appear as "successful" uploads
+  // while no rows land server-side — caller's cursor then advances past
+  // unprocessed messages, causing silent data loss.
   if (batchSize) {
     for (let i = 0; i < encrypted.length; i += batchSize) {
       const batch = encrypted.slice(i, i + batchSize)
-      await apiRequest({
+      const res = await apiRequest({
         path: apiPath,
         body: { [bodyKey]: batch, ...extraBody },
+        useWriteSecret,
       })
+      if ('error' in res) {
+        return {
+          error: `apiRequest ${apiPath} failed (status ${res.errorStatus}): ${res.error.slice(0, 300)}`,
+        }
+      }
     }
   } else {
-    await apiRequest({
+    const res = await apiRequest({
       path: apiPath,
       body: { [bodyKey]: encrypted, ...extraBody },
+      useWriteSecret,
     })
+    if ('error' in res) {
+      return {
+        error: `apiRequest ${apiPath} failed (status ${res.errorStatus}): ${res.error.slice(0, 300)}`,
+      }
+    }
   }
 
   return { count: items.length }

@@ -52,6 +52,7 @@ export const iContactsService = createScheduledWriteService({
           syncTime: new Date().toISOString(),
           deviceId: getDeviceId(),
         },
+        useWriteSecret: true,
       }),
   }),
 })

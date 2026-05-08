@@ -14,6 +14,7 @@ export const appleNotesService = createScheduledWriteService({
         config: { encryptedFields: ['title', 'body'] },
         apiPath: '/api/apple-notes',
         bodyKey: 'notes',
+        useWriteSecret: true,
       }),
   }),
 })

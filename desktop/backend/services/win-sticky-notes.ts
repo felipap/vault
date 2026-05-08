@@ -14,6 +14,7 @@ export const winStickyNotesService = createScheduledWriteService({
         config: { encryptedFields: ['text'] },
         apiPath: '/api/win-sticky-notes',
         bodyKey: 'stickies',
+        useWriteSecret: true,
       }),
   }),
 })

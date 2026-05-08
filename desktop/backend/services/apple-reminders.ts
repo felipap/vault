@@ -44,6 +44,7 @@ export const appleRemindersService = createScheduledWriteService({
           syncTime: new Date().toISOString(),
           deviceId: getDeviceId(),
         },
+        useWriteSecret: true,
       }),
   }),
 })
