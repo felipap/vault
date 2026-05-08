@@ -49,6 +49,8 @@ export async function uploadMessages(
       messageCount: messages.length,
     },
     preprocess: encryptAttachments,
+    // Server middleware gates /api/* POSTs with API_WRITE_SECRET.
+    useWriteSecret: true,
   })
 
   if ('error' in result) {

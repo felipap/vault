@@ -14,6 +14,7 @@ export const macosStickiesService = createScheduledWriteService({
         config: { encryptedFields: ['text'] },
         apiPath: '/api/macos-stickies',
         bodyKey: 'stickies',
+        useWriteSecret: true,
       }),
   }),
 })
